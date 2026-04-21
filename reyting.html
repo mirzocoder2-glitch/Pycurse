@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Рейтинг — EduTech</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  .podium { display:flex; align-items:flex-end; justify-content:center; gap:16px; margin:32px 0; }
+  .podium-item { text-align:center; }
+  .podium-block {
+    width:90px; display:flex; flex-direction:column; align-items:center;
+    justify-content:flex-end; padding:16px 10px 12px; border-radius:12px 12px 0 0;
+    position:relative;
+  }
+  .podium-1 { background:linear-gradient(135deg,#ffd700,#ffb300); height:130px; }
+  .podium-2 { background:linear-gradient(135deg,#c0c0c0,#9e9e9e); height:100px; }
+  .podium-3 { background:linear-gradient(135deg,#cd7f32,#a0522d); height:80px; }
+  .podium-avatar {
+    width:52px; height:52px; border-radius:50%; background:rgba(0,0,0,0.25);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.3rem; font-weight:700; color:#fff; margin-bottom:8px;
+  }
+  .podium-name { font-size:0.78rem; font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.4); }
+  .podium-score { font-size:0.72rem; color:rgba(255,255,255,0.85); margin-top:2px; }
+  .podium-rank { position:absolute; top:-18px; left:50%; transform:translateX(-50%); font-size:1.5rem; }
+  .rank-table tbody tr.me td { background:rgba(26,115,232,0.08); }
+  .rank-badge { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; font-size:0.8rem; font-weight:700; }
+  .rank-1 { background:#ffd700; color:#333; }
+  .rank-2 { background:#c0c0c0; color:#333; }
+  .rank-3 { background:#cd7f32; color:#fff; }
+  .rank-other { background:var(--border); color:var(--muted); }
+  .my-card {
+    background:linear-gradient(135deg,rgba(26,115,232,0.15),rgba(255,107,53,0.08));
+    border:1px solid rgba(26,115,232,0.4); border-radius:14px; padding:22px;
+    display:flex; align-items:center; gap:20px; margin-bottom:28px;
+  }
+  .my-avatar { width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;flex-shrink:0; }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Edu<span>Tech</span></div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="/dashboard.html"><span class="nav-icon">🏠</span>Асосӣ</a>
+      <a class="nav-item" href="/pupil.html"><span class="nav-icon">📚</span>Мавзӯъҳо</a>
+      <a class="nav-item" href="/test.html"><span class="nav-icon">📝</span>Тестҳо</a>
+      <a class="nav-item" href="/zadacha.html"><span class="nav-icon">💻</span>Масъалаҳо</a>
+      <a class="nav-item" href="/interpretator.html"><span class="nav-icon">⚡</span>Интерпретатор</a>
+      <a class="nav-item active" href="/reyting.html"><span class="nav-icon">🏆</span>Рейтинг</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="avatarLetter">S</div>
+        <div><div class="user-name" id="sidebarName">Хонанда</div><div class="user-role">Хонанда</div></div>
+      </div>
+      <button class="btn btn-outline btn-sm" style="width:100%;margin-top:10px;justify-content:center" onclick="logout()">Баромадан</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div><h1>🏆 Рейтинг</h1><div class="breadcrumb">Ҷадвали беҳтарин хонандагон</div></div>
+    </div>
+
+    <!-- My card -->
+    <div class="my-card" id="myCard"></div>
+
+    <!-- Podium -->
+    <div class="podium" id="podium"></div>
+
+    <!-- Full table -->
+    <div class="card">
+      <h3 style="margin-bottom:18px">📊 Ҷадвали пурра</h3>
+      <div class="table-wrap">
+        <table class="rank-table">
+          <thead><tr><th>Ҷой</th><th>Хонанда</th><th>Тестҳо</th><th>Миёна балл</th><th>Беҳтарин натиҷа</th></tr></thead>
+          <tbody id="rankTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="api.js"></script>
+<script>
+const session = requireAuth();
+if (session) {
+  document.getElementById('sidebarName').textContent = session.name;
+  document.getElementById('avatarLetter').textContent = session.name[0];
+}
+
+function render() {
+  const data = Storage.getData();
+  const students = data.users.filter(u=>u.role==='student');
+
+  // Calculate scores per student
+  const ranked = students.map(s => {
+    const results = data.results.filter(r=>r.userId===s.id);
+    const avg = results.length ? Math.round(results.reduce((a,b)=>a+(b.score||0),0)/results.length) : 0;
+    const best = results.length ? Math.max(...results.map(r=>r.score||0)) : 0;
+    return { ...s, count: results.length, avg, best };
+  }).sort((a,b)=>b.avg-a.avg||b.count-a.count);
+
+  // My card
+  const me = ranked.find(r=>r.id===session?.userId);
+  const myRank = ranked.indexOf(me)+1;
+  document.getElementById('myCard').innerHTML = me ? `
+    <div class="my-avatar">${me.name[0]}</div>
+    <div style="flex:1">
+      <h3 style="margin-bottom:4px">${me.name}</h3>
+      <div style="color:var(--muted);font-size:0.85rem">Шумо дар ҷойи <strong style="color:var(--primary)">${myRank}</strong></div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-family:Montserrat;font-size:2rem;font-weight:900;color:var(--primary)">${me.avg}%</div>
+      <div style="color:var(--muted);font-size:0.8rem">Миёна балл</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-family:Montserrat;font-size:2rem;font-weight:900;color:var(--accent)">${me.count}</div>
+      <div style="color:var(--muted);font-size:0.8rem">Тестҳо</div>
+    </div>` : '<p style="color:var(--muted)">Ягон натиҷа нест. Тест гузаред!</p>';
+
+  // Podium
+  const top3 = ranked.slice(0,3);
+  const order = [top3[1], top3[0], top3[2]].filter(Boolean);
+  const sizes = { 0: 'podium-2', 1: 'podium-1', 2: 'podium-3' };
+  const nums = { 0: 2, 1: 1, 2: 3 };
+  const medals = { 1:'🥇', 2:'🥈', 3:'🥉' };
+  document.getElementById('podium').innerHTML = order.length ? order.map((p,idx)=>`
+    <div class="podium-item">
+      <div class="podium-block ${sizes[idx]}">
+        <span class="podium-rank">${medals[nums[idx]]}</span>
+        <div class="podium-avatar">${p.name[0]}</div>
+        <div class="podium-name">${p.name.split(' ')[0]}</div>
+        <div class="podium-score">${p.avg}%</div>
+      </div>
+    </div>`).join('') : '<p style="color:var(--muted)">Маълумот нест</p>';
+
+  // Table
+  document.getElementById('rankTableBody').innerHTML = ranked.map((r,i)=>`
+    <tr class="${r.id===session?.userId?'me':''}">
+      <td><span class="rank-badge ${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-other'}">${i+1}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.82rem">${r.name[0]}</div>
+          <div><strong>${r.name}</strong>${r.id===session?.userId?' <span class="badge badge-primary" style="font-size:0.7rem">Шумо</span>':''}</div>
+        </div>
+      </td>
+      <td>${r.count}</td>
+      <td><strong style="color:${r.avg>=70?'var(--success)':r.avg>=40?'var(--warning)':'var(--danger)'}">${r.avg}%</strong></td>
+      <td>${r.best}%</td>
+    </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Ягон хонанда нест</td></tr>';
+}
+
+render();
+</script>
+</body>
+</html>

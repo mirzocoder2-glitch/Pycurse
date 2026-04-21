@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Дашборд — ПлатформаТЈ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="navbar-root"></div>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-label">Менюи асосӣ</div>
+    <a href="/dashboard.html" class="sidebar-link active"><span class="sidebar-icon">📊</span> Дашборд</a>
+    <a href="/pupil.html" class="sidebar-link"><span class="sidebar-icon">📚</span> Курсҳо</a>
+    <a href="/test.html" class="sidebar-link"><span class="sidebar-icon">📝</span> Тестҳо</a>
+    <a href="/zadacha.html" class="sidebar-link"><span class="sidebar-icon">💡</span> Масъалаҳо</a>
+    <a href="/chat.html" class="sidebar-link"><span class="sidebar-icon">💬</span> Чат</a>
+    <a href="/jadval.html" class="sidebar-link"><span class="sidebar-icon">📅</span> Ҷадвал</a>
+    <a href="/interpretator.html" class="sidebar-link"><span class="sidebar-icon">💻</span> Интерпретатор</a>
+    <a href="/reyting.html" class="sidebar-link"><span class="sidebar-icon">🏆</span> Рейтинг</a>
+    <a href="/sertifikat.html" class="sidebar-link"><span class="sidebar-icon">🏅</span> Сертификатҳо</a>
+  </aside>
+  <main class="main-content">
+    <!-- Welcome Banner -->
+    <div style="background:linear-gradient(135deg,rgba(0,198,255,0.1),rgba(255,107,53,0.08));border:1px solid rgba(0,198,255,0.25);border-radius:16px;padding:1.8rem 2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1.2rem">
+      <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0" id="user-avatar"></div>
+      <div>
+        <h2 style="font-size:1.3rem;font-weight:800" id="user-welcome"></h2>
+        <p style="color:var(--text-muted);font-size:0.875rem" id="user-sub"></p>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div style="font-size:2rem;font-weight:900;color:var(--primary)" id="user-points-big">0</div>
+        <div style="color:var(--text-muted);font-size:0.8rem">нуқта</div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="dash-stats"></div>
+
+    <!-- Two columns -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem" id="two-col">
+      <!-- Progress chart -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">📊 Пешрафти курсҳо</span></div>
+        <div id="progress-chart"></div>
+      </div>
+      <!-- Test results -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">📝 Натиҷаи охирин тестҳо</span></div>
+        <div id="test-results-list"></div>
+      </div>
+    </div>
+
+    <!-- Weekly activity + quick actions -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+      <div class="card">
+        <div class="card-header"><span class="card-title">⚡ Амалиётҳои зуд</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem">
+          <a href="/pupil.html" class="card" style="text-align:center;padding:1.2rem;text-decoration:none;color:var(--text);transition:border-color 0.2s;cursor:pointer" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:2rem;margin-bottom:0.5rem">📚</div><div style="font-size:0.85rem;font-weight:600">Дарсҳо</div>
+          </a>
+          <a href="/test.html" class="card" style="text-align:center;padding:1.2rem;text-decoration:none;color:var(--text);transition:border-color 0.2s;cursor:pointer" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:2rem;margin-bottom:0.5rem">📝</div><div style="font-size:0.85rem;font-weight:600">Тестҳо</div>
+          </a>
+          <a href="/zadacha.html" class="card" style="text-align:center;padding:1.2rem;text-decoration:none;color:var(--text);transition:border-color 0.2s;cursor:pointer" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:2rem;margin-bottom:0.5rem">💡</div><div style="font-size:0.85rem;font-weight:600">Масъалаҳо</div>
+          </a>
+          <a href="/interpretator.html" class="card" style="text-align:center;padding:1.2rem;text-decoration:none;color:var(--text);transition:border-color 0.2s;cursor:pointer" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:2rem;margin-bottom:0.5rem">💻</div><div style="font-size:0.85rem;font-weight:600">Интерпретатор</div>
+          </a>
+          <a href="/chat.html" class="card" style="text-align:center;padding:1.2rem;text-decoration:none;color:var(--text);transition:border-color 0.2s;cursor:pointer" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:2rem;margin-bottom:0.5rem">💬</div><div style="font-size:0.85rem;font-weight:600">Чат</div>
+          </a>
+          <a href="/sertifikat.html" class="card" style="text-align:center;padding:1.2rem;text-decoration:none;color:var(--text);transition:border-color 0.2s;cursor:pointer" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:2rem;margin-bottom:0.5rem">🏅</div><div style="font-size:0.85rem;font-weight:600">Сертификат</div>
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">🏆 Ҷойгиршавии ман</span></div>
+        <div id="my-rank-info"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="api.js"></script>
+<script>
+const user = Platform.requireAuth();
+document.getElementById('navbar-root').innerHTML = Platform.renderNavbar('dashboard');
+ThemeManager.init();
+initNotifUI();
+
+// Welcome
+document.getElementById('user-avatar').textContent = user.avatar;
+document.getElementById('user-welcome').textContent = 'Хуш омадед, ' + user.name + '!';
+const hour = new Date().getHours();
+const greet = hour < 12 ? 'Субҳ муборак' : hour < 17 ? 'Рӯз муборак' : 'Шом муборак';
+document.getElementById('user-sub').textContent = greet + ' · ' + new Date().toLocaleDateString('ru-RU', {weekday:'long', day:'numeric', month:'long'});
+const freshUser = Platform.getUsers().find(u => u.id === user.id);
+document.getElementById('user-points-big').textContent = (freshUser?.points || 0).toLocaleString();
+
+// Stats
+const results = Platform.getResults().filter(r => r.userId === user.id);
+const courses = Platform.getCourses();
+const tests = Platform.getTests();
+const tasks = Platform.getTasks();
+const lb = Platform.getLeaderboard();
+const myRank = lb.findIndex(u => u.id === user.id) + 1;
+
+document.getElementById('dash-stats').innerHTML = `
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(0,198,255,.15)">🏆</div><div class="stat-info"><div class="stat-num">${myRank || '—'}</div><div class="stat-label">Рейтинг</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,.15)">📝</div><div class="stat-info"><div class="stat-num">${results.length}</div><div class="stat-label">Тест гузашт</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(245,158,11,.15)">⭐</div><div class="stat-info"><div class="stat-num">${results.length ? Math.round(results.reduce((a,r)=>a+r.percent,0)/results.length) : 0}%</div><div class="stat-label">Миёна%</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(239,68,68,.15)">🎓</div><div class="stat-info"><div class="stat-num">${courses.filter(c=>Certificate.canGet(user.id,c.id)).length}</div><div class="stat-label">Хатм шуд</div></div></div>`;
+
+// Progress chart
+const chartDiv = document.getElementById('progress-chart');
+if (!courses.length) {
+  chartDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)">Курс нест</div>';
+} else {
+  chartDiv.innerHTML = courses.map(c => {
+    const cTests = tests.filter(t => t.courseId === c.id);
+    if (!cTests.length) return '';
+    const passed = cTests.filter(t => results.find(r => r.testId === t.id && r.percent >= 60)).length;
+    const pct = Math.round(passed / cTests.length * 100);
+    return `
+      <div class="chart-bar-row">
+        <div class="chart-label">${c.icon} ${c.title.substring(0,12)}</div>
+        <div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${pct}%">${pct>15?pct+'%':''}</div></div>
+        <div class="chart-val">${pct}%</div>
+      </div>`;
+  }).join('') || '<div style="text-align:center;padding:2rem;color:var(--text-muted)">Курс нест</div>';
+}
+
+// Test results
+const testList = document.getElementById('test-results-list');
+const myResults = Platform.getResults().filter(r => r.userId === user.id).slice(-8).reverse();
+if (!myResults.length) {
+  testList.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)"><div style="font-size:2rem">📝</div><div>Ҳоло тест нагузашт</div><a href="/test.html" class="btn btn-primary btn-sm" style="margin-top:1rem">Тест гузаштан</a></div>';
+} else {
+  testList.innerHTML = myResults.map(r => {
+    const t = tests.find(x => x.id === r.testId);
+    const c = t ? courses.find(x => x.id === t.courseId) : null;
+    const color = r.percent >= 80 ? 'var(--success)' : r.percent >= 60 ? 'var(--warning)' : 'var(--danger)';
+    return `
+      <div style="display:flex;align-items:center;gap:0.8rem;padding:0.7rem 0;border-bottom:1px solid var(--border)">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(0,198,255,0.1);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">${c?c.icon:'📝'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:0.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t?Platform.escapeHtml(t.title):'Тест'}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)">${r.score}/${r.total} савол · ${Platform.formatDate(r.date)}</div>
+        </div>
+        <div style="font-weight:800;font-size:1.1rem;color:${color}">${r.percent}%</div>
+      </div>`;
+  }).join('');
+}
+
+// My rank
+const rankDiv = document.getElementById('my-rank-info');
+if (myRank) {
+  const me = lb[myRank-1];
+  const prev = myRank > 1 ? lb[myRank-2] : null;
+  const next = myRank < lb.length ? lb[myRank] : null;
+  rankDiv.innerHTML = `
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:3rem;font-weight:900;color:var(--primary)">#${myRank}</div>
+      <div style="color:var(--text-muted);font-size:0.875rem">Ҷойгиршавии умумӣ аз ${lb.length} нафар</div>
+    </div>
+    ${prev?`<div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem;background:var(--bg3);border-radius:8px;margin-bottom:0.5rem;opacity:0.7"><span>${prev.avatar} ${prev.name}</span><span style="color:var(--primary)">${prev.points} нуқта</span></div>`:''}
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.8rem;background:rgba(0,198,255,0.1);border:1px solid var(--primary);border-radius:8px;margin-bottom:0.5rem">
+      <span><strong>${me.avatar} ${me.name} (шумо)</strong></span>
+      <span style="color:var(--primary);font-weight:700">${me.points} нуқта</span>
+    </div>
+    ${next?`<div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem;background:var(--bg3);border-radius:8px;opacity:0.7"><span>${next.avatar} ${next.name}</span><span style="color:var(--primary)">${next.points} нуқта</span></div>`:''}
+    <div style="margin-top:1rem;font-size:0.8rem;color:var(--text-muted);text-align:center">
+      ${prev ? `Барои #${myRank-1}: ${prev.points - me.points} нуқта лозим аст` : '🏆 Шумо дар ҷои аввал!'}
+    </div>`;
+} else {
+  rankDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)">Тест гузаред ва ба рейтинг дохил шавед</div>';
+}
+
+function initNotifUI() {
+  const bell = document.getElementById('notif-bell-wrap');
+  if (!bell) return;
+  updateNotifBadge();
+  setInterval(updateNotifBadge, 5000);
+  document.addEventListener('click', e => {
+    if (!bell.contains(e.target)) document.getElementById('notif-dropdown').classList.remove('open');
+  });
+}
+function updateNotifBadge() {
+  const count = Notifs.unreadCount(user.id);
+  const badge = document.getElementById('notif-count');
+  if (!badge) return;
+  badge.textContent = count; badge.style.display = count ? '' : 'none';
+}
+function toggleNotif() {
+  const dd = document.getElementById('notif-dropdown');
+  dd.classList.toggle('open');
+  if (dd.classList.contains('open')) renderNotifs();
+}
+function renderNotifs() {
+  const notifs = Notifs.forUser(user.id).slice(0,15);
+  const dd = document.getElementById('notif-dropdown');
+  dd.innerHTML = `
+    <div class="notif-header"><strong>🔔 Огоҳномаҳо</strong><button onclick="Notifs.markAll();renderNotifs();updateNotifBadge()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:0.8rem">Ҳама хонда</button></div>
+    ${notifs.length ? notifs.map(n=>`<div class="notif-item ${n.read?'read':'unread'}" onclick="Notifs.markRead(${n.id});renderNotifs();updateNotifBadge()"><div class="notif-icon">${n.icon}</div><div class="notif-text"><div>${Platform.escapeHtml(n.msg)}</div><div class="notif-time">${Chat.timeAgo(n.time)}</div></div></div>`).join('') : '<div class="notif-empty">Огоҳнома нест 🎉</div>'}`;
+}
+
+@media(max-width:768px){#two-col{grid-template-columns:1fr}}
+</script>
+</body>
+</html>

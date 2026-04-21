@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тестҳо — EduTech</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  .test-card { background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:22px;transition:0.25s;cursor:pointer; }
+  .test-card:hover { border-color:var(--primary);transform:translateY(-3px); }
+  /* TEST TAKING */
+  #testArea { display:none; }
+  .test-header-bar { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px; }
+  .timer { font-family:'Montserrat',sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent); }
+  .q-card { background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:26px;margin-bottom:20px; }
+  .q-num { color:var(--muted);font-size:0.82rem;margin-bottom:8px;font-weight:600; }
+  .q-text { font-size:1rem;font-weight:600;margin-bottom:18px;line-height:1.5; }
+  .option-btn {
+    display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;
+    background:var(--dark);border:1.5px solid var(--border);border-radius:10px;
+    color:var(--text);font-size:0.9rem;cursor:pointer;transition:0.2s;margin-bottom:10px;
+    text-align:left;font-family:inherit;
+  }
+  .option-btn:hover { border-color:var(--primary);background:rgba(26,115,232,0.06); }
+  .option-btn.selected { border-color:var(--primary);background:rgba(26,115,232,0.12);color:var(--primary); }
+  .option-btn.correct { border-color:var(--success);background:rgba(46,160,67,0.12);color:var(--success); }
+  .option-btn.wrong { border-color:var(--danger);background:rgba(248,81,73,0.12);color:var(--danger); }
+  .opt-letter { width:28px;height:28px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0; }
+  /* RESULT */
+  #resultArea { display:none;text-align:center;padding:40px 20px; }
+  .result-circle { width:140px;height:140px;border-radius:50%;background:conic-gradient(var(--primary) calc(var(--pct)*1%),var(--border) 0);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;position:relative; }
+  .result-circle-inner { width:110px;height:110px;border-radius:50%;background:var(--dark);display:flex;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:900; }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Edu<span>Tech</span></div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="/dashboard.html"><span class="nav-icon">🏠</span>Асосӣ</a>
+      <a class="nav-item" href="/pupil.html"><span class="nav-icon">📚</span>Мавзӯъҳо</a>
+      <a class="nav-item active" href="/test.html"><span class="nav-icon">📝</span>Тестҳо</a>
+      <a class="nav-item" href="/zadacha.html"><span class="nav-icon">💻</span>Масъалаҳо</a>
+      <a class="nav-item" href="/interpretator.html"><span class="nav-icon">⚡</span>Интерпретатор</a>
+      <a class="nav-item" href="/reyting.html"><span class="nav-icon">🏆</span>Рейтинг</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="avatarLetter">S</div>
+        <div><div class="user-name" id="sidebarName">Хонанда</div><div class="user-role">Хонанда</div></div>
+      </div>
+      <button class="btn btn-outline btn-sm" style="width:100%;margin-top:10px;justify-content:center" onclick="logout()">Баромадан</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <!-- LIST -->
+    <div id="listArea">
+      <div class="page-header"><h1>📝 Тестҳо</h1></div>
+      <div class="card-grid" id="testsGrid"></div>
+    </div>
+
+    <!-- TAKING TEST -->
+    <div id="testArea">
+      <div class="test-header-bar">
+        <div>
+          <h2 id="testRunTitle" style="margin-bottom:4px"></h2>
+          <div style="color:var(--muted);font-size:0.85rem" id="testRunProgress"></div>
+        </div>
+        <div class="timer" id="timerEl">⏱ --:--</div>
+        <button class="btn btn-outline btn-sm" onclick="submitTest()">Анҷом додан ✓</button>
+      </div>
+      <div id="questionsContainer"></div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="resultArea">
+      <div class="result-circle" id="resultCircle">
+        <div class="result-circle-inner" id="resultPct"></div>
+      </div>
+      <h2 id="resultMsg" style="margin-bottom:10px"></h2>
+      <p id="resultSub" style="color:var(--muted);margin-bottom:28px"></p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="showList()">← Тестҳо</button>
+        <a href="/reyting.html" class="btn btn-outline">🏆 Рейтинг</a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="api.js"></script>
+<script>
+const session = requireAuth('student');
+if (session) {
+  document.getElementById('sidebarName').textContent = session.name;
+  document.getElementById('avatarLetter').textContent = session.name[0];
+}
+
+let currentTest = null, answers = {}, timerInterval;
+const LETTERS = ['A','B','C','D'];
+
+function showList() {
+  document.getElementById('listArea').style.display='';
+  document.getElementById('testArea').style.display='none';
+  document.getElementById('resultArea').style.display='none';
+  clearInterval(timerInterval);
+  renderList();
+}
+
+function renderList() {
+  const data = Storage.getData();
+  document.getElementById('testsGrid').innerHTML = data.tests.length ? data.tests.map(t=>
+    `<div class="test-card" onclick="startTest(${t.id})">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">
+        <span class="badge badge-primary">📝 ${(t.questions||[]).length} савол</span>
+        <span class="badge badge-success">→</span>
+      </div>
+      <h3 style="margin-bottom:6px">${t.title}</h3>
+      <p style="color:var(--muted);font-size:0.83rem;margin-bottom:14px">${t.description||''}</p>
+      <button class="btn btn-primary btn-sm">Оғоз кардан →</button>
+    </div>`).join('') : '<p style="color:var(--muted)">Тест мавҷуд нест</p>';
+}
+
+function startTest(id) {
+  const data = Storage.getData();
+  currentTest = data.tests.find(t=>t.id===id);
+  if (!currentTest?.questions?.length) return showAlert('Тест холӣ аст','danger');
+  answers = {};
+  document.getElementById('listArea').style.display='none';
+  document.getElementById('testArea').style.display='';
+  document.getElementById('resultArea').style.display='none';
+  document.getElementById('testRunTitle').textContent = currentTest.title;
+  renderQuestions();
+  startTimer(currentTest.questions.length * 60);
+}
+
+function renderQuestions() {
+  document.getElementById('testRunProgress').textContent = `${currentTest.questions.length} савол`;
+  document.getElementById('questionsContainer').innerHTML = currentTest.questions.map((q,qi)=>`
+    <div class="q-card">
+      <div class="q-num">Савол ${qi+1} / ${currentTest.questions.length}</div>
+      <div class="q-text">${q.text}</div>
+      ${q.options.map((opt,oi)=>`
+        <button class="option-btn" id="opt_${qi}_${oi}" onclick="selectAnswer(${qi},${oi})">
+          <span class="opt-letter">${LETTERS[oi]}</span>
+          ${opt}
+        </button>`).join('')}
+    </div>`).join('');
+}
+
+function selectAnswer(qi, oi) {
+  answers[qi] = oi;
+  const q = currentTest.questions[qi];
+  q.options.forEach((_,i)=>{
+    const btn = document.getElementById(`opt_${qi}_${i}`);
+    btn.classList.remove('selected');
+  });
+  document.getElementById(`opt_${qi}_${oi}`).classList.add('selected');
+}
+
+function startTimer(seconds) {
+  let left = seconds;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(()=>{
+    left--;
+    const m = String(Math.floor(left/60)).padStart(2,'0');
+    const s = String(left%60).padStart(2,'0');
+    document.getElementById('timerEl').textContent = `⏱ ${m}:${s}`;
+    if (left<=0) { clearInterval(timerInterval); submitTest(); }
+  },1000);
+}
+
+function submitTest() {
+  clearInterval(timerInterval);
+  let correct=0;
+  currentTest.questions.forEach((q,qi)=>{
+    const ans = answers[qi];
+    if (ans!==undefined) {
+      const isCorrect = ans===q.correct;
+      if (isCorrect) correct++;
+      document.getElementById(`opt_${qi}_${ans}`).classList.remove('selected');
+      document.getElementById(`opt_${qi}_${ans}`).classList.add(isCorrect?'correct':'wrong');
+      document.getElementById(`opt_${qi}_${q.correct}`).classList.add('correct');
+    } else {
+      document.getElementById(`opt_${qi}_${q.correct}`).classList.add('correct');
+    }
+  });
+  const pct = Math.round((correct/currentTest.questions.length)*100);
+
+  // Save result
+  Storage.addResult({ userId:session.userId, testId:currentTest.id, testTitle:currentTest.title, score:pct, correct, total:currentTest.questions.length });
+
+  setTimeout(()=>{
+    document.getElementById('testArea').style.display='none';
+    document.getElementById('resultArea').style.display='';
+    document.getElementById('resultCircle').style.setProperty('--pct', pct);
+    document.getElementById('resultPct').textContent = pct+'%';
+    document.getElementById('resultMsg').textContent = pct>=80?'🎉 Аъло!':pct>=60?'👍 Хуб!':pct>=40?'😊 Қаноатбахш':'😟 Кӯшиш кунед!';
+    document.getElementById('resultSub').textContent = `Дуруст: ${correct} / ${currentTest.questions.length} савол`;
+  }, 1500);
+}
+
+showList();
+</script>
+</body>
+</html>

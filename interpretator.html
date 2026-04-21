@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Интерпретатор — EduTech</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  .interp-layout { display:grid; grid-template-rows:auto 1fr; height:calc(100vh - 80px); gap:0; }
+  .toolbar {
+    background:var(--card-bg); border:1px solid var(--border); border-radius:12px 12px 0 0;
+    padding:12px 18px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  }
+  .lang-tabs { display:flex; gap:6px; }
+  .lang-tab {
+    padding:7px 18px; border-radius:8px; border:1.5px solid var(--border);
+    background:transparent; color:var(--muted); cursor:pointer; font-size:0.88rem;
+    font-weight:600; transition:0.2s; font-family:inherit;
+  }
+  .lang-tab.active { border-color:var(--primary); background:rgba(26,115,232,0.12); color:var(--primary); }
+  .editor-area {
+    display:grid; grid-template-columns:1fr 1fr; height:100%;
+    border:1px solid var(--border); border-top:none; border-radius:0 0 12px 12px; overflow:hidden;
+  }
+  @media(max-width:800px) { .editor-area { grid-template-columns:1fr; grid-template-rows:1fr 1fr; } }
+  .editor-pane { display:flex; flex-direction:column; border-right:1px solid var(--border); }
+  .editor-pane:last-child { border-right:none; }
+  .pane-header {
+    padding:10px 16px; background:var(--card-bg2); border-bottom:1px solid var(--border);
+    font-size:0.82rem; font-weight:600; color:var(--muted); display:flex; align-items:center; justify-content:space-between;
+  }
+  .code-editor {
+    flex:1; background:#0d1117; color:#c9d1d9; font-family:'Fira Code','Courier New',monospace;
+    font-size:0.9rem; border:none; outline:none; resize:none; padding:16px;
+    line-height:1.7; tab-size:4;
+  }
+  .output-pane { display:flex; flex-direction:column; }
+  .output-content { flex:1; overflow:auto; }
+  iframe#htmlOutput { width:100%; height:100%; border:none; background:#fff; }
+  .console-output {
+    flex:1; padding:16px; font-family:'Fira Code','Courier New',monospace;
+    font-size:0.88rem; color:#7ec8e3; background:#010409; white-space:pre-wrap;
+    overflow-y:auto; line-height:1.7;
+  }
+  .console-line.err { color:var(--danger); }
+  .console-line.info { color:var(--muted); }
+  .console-line.ok { color:var(--success); }
+  .char-count { color:var(--muted); font-size:0.75rem; }
+
+  /* EXAMPLES */
+  .examples-strip {
+    display:flex; gap:8px; overflow-x:auto; padding:12px 18px;
+    background:var(--card-bg); border:1px solid var(--border); border-top:none;
+    border-radius:0 0 12px 12px;
+  }
+  .ex-btn { white-space:nowrap; }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Edu<span>Tech</span></div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="/dashboard.html"><span class="nav-icon">🏠</span>Асосӣ</a>
+      <a class="nav-item" href="/pupil.html"><span class="nav-icon">📚</span>Мавзӯъҳо</a>
+      <a class="nav-item" href="/test.html"><span class="nav-icon">📝</span>Тестҳо</a>
+      <a class="nav-item" href="/zadacha.html"><span class="nav-icon">💻</span>Масъалаҳо</a>
+      <a class="nav-item active" href="/interpretator.html"><span class="nav-icon">⚡</span>Интерпретатор</a>
+      <a class="nav-item" href="/reyting.html"><span class="nav-icon">🏆</span>Рейтинг</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="avatarLetter">S</div>
+        <div><div class="user-name" id="sidebarName">Хонанда</div><div class="user-role">Хонанда</div></div>
+      </div>
+      <button class="btn btn-outline btn-sm" style="width:100%;margin-top:10px;justify-content:center" onclick="logout()">Баромадан</button>
+    </div>
+  </aside>
+
+  <main class="main-content" style="padding:20px;display:flex;flex-direction:column;height:100vh;overflow:hidden">
+    <div class="page-header" style="margin-bottom:14px">
+      <div><h1>⚡ Интерпретатор</h1><div class="breadcrumb">HTML ва Python — бевосита дар браузер</div></div>
+    </div>
+
+    <div class="interp-layout" style="flex:1">
+      <div class="toolbar">
+        <div class="lang-tabs">
+          <button class="lang-tab active" id="tabPython" onclick="setLang('python')">🐍 Python</button>
+          <button class="lang-tab" id="tabHTML" onclick="setLang('html')">🌐 HTML</button>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-success btn-sm" onclick="runCode()">▶ Иҷро кардан</button>
+          <button class="btn btn-outline btn-sm" onclick="clearAll()">🗑 Тоза</button>
+          <button class="btn btn-outline btn-sm" onclick="copyCode()">📋 Нусха</button>
+        </div>
+      </div>
+
+      <div class="editor-area">
+        <div class="editor-pane">
+          <div class="pane-header">
+            <span id="editorLabel">🐍 Python — Редактор</span>
+            <span class="char-count" id="charCount">0 символ</span>
+          </div>
+          <textarea class="code-editor" id="codeEditor" spellcheck="false"
+            placeholder="# Коди худро ин ҷо нависед..."
+            oninput="updateCharCount()"></textarea>
+        </div>
+        <div class="output-pane">
+          <div class="pane-header">💻 Натиҷа / Вывод</div>
+          <div class="output-content" id="outputContent">
+            <!-- Python console -->
+            <div class="console-output" id="consoleOutput">
+              <span class="console-line info">EduTech Интерпретатор v1.0 — Python ва HTML дастгирӣ мешавад
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Барои иҷро кардан Ctrl+Enter ё ▶ Иҷро кардан</span>
+            </div>
+            <!-- HTML iframe -->
+            <iframe id="htmlOutput" style="display:none"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- Examples strip -->
+      <div class="examples-strip" id="examplesStrip">
+        <button class="btn btn-outline btn-sm ex-btn" onclick="loadExample('hello')">Hello World</button>
+        <button class="btn btn-outline btn-sm ex-btn" onclick="loadExample('loop')">Давр (цикл)</button>
+        <button class="btn btn-outline btn-sm ex-btn" onclick="loadExample('func')">Функсия</button>
+        <button class="btn btn-outline btn-sm ex-btn" onclick="loadExample('list')">Рӯйхат</button>
+        <button class="btn btn-outline btn-sm ex-btn" onclick="loadExample('calc')">Ҳисобкунак</button>
+        <button class="btn btn-outline btn-sm ex-btn" onclick="loadExample('fib')">Фибоначчи</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="api.js"></script>
+<script>
+// Auth guard
+(function(){ const u=Platform.getCurrentUser(); if(!u){ window.location.href='login.html'; } })();
+const session = Platform.getCurrentUser();
+if (session) {
+  if(document.getElementById('sidebarName')) document.getElementById('sidebarName').textContent = session.name;
+  if(document.getElementById('avatarLetter')) document.getElementById('avatarLetter').textContent = session.name[0];
+}
+
+let currentLang = 'python';
+
+const pyExamples = {
+  hello: `# Салом Дунё!
+print("Салом Дунё!")
+print("Хуш омадед ба EduTech!")`,
+  loop: `# Давр (цикл)
+for i in range(1, 11):
+    print(f"Рақам: {i}")`,
+  func: `# Функсия
+def salom(nom):
+    return f"Салом, {nom}!"
+
+print(salom("Алишер"))
+print(salom("Малика"))`,
+  list: `# Рӯйхат (List)
+мева = ["себ", "мӯз", "афлесун", "ангур"]
+print("Меваҳо:")
+for i, m in enumerate(мева, 1):
+    print(f"  {i}. {m}")
+print(f"Ҳамагӣ: {len(мева)} мева")`,
+  calc: `# Ҳисобкунак
+def hisob(a, amal, b):
+    if amal == '+': return a + b
+    if amal == '-': return a - b
+    if amal == '*': return a * b
+    if amal == '/': return a / b if b != 0 else "Хато: тақсим ба сифр"
+
+print(hisob(10, '+', 5))
+print(hisob(20, '-', 8))
+print(hisob(4, '*', 7))
+print(hisob(15, '/', 3))`,
+  fib: `# Силсилаи Фибоначчи
+def fibonacci(n):
+    a, b = 0, 1
+    for _ in range(n):
+        print(a, end=' ')
+        a, b = b, a + b
+    print()
+
+fibonacci(10)`
+};
+
+const htmlExamples = {
+  hello: `<!DOCTYPE html>
+<html>
+<head><title>Салом!</title></head>
+<body style="font-family:sans-serif;background:#0d1117;color:#e6edf3;padding:30px">
+  <h1 style="color:#1a73e8">Салом Дунё! 🌍</h1>
+  <p>Ин аввалин саҳифаи HTML-и ман аст.</p>
+</body>
+</html>`,
+  loop: `<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;padding:20px;background:#f5f5f5">
+  <h2>Рақамҳо 1 то 10</h2>
+  <div id="nums"></div>
+  <script>
+    const d = document.getElementById('nums');
+    for(let i=1;i<=10;i++){
+      d.innerHTML += '<span style="margin:4px;padding:8px 14px;background:#1a73e8;color:#fff;border-radius:6px;display:inline-block">'+i+'</span>';
+    }
+  </sc` + `ript>
+</body>
+</html>`,
+  func: `<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;padding:30px;background:#fff">
+  <input id="nom" placeholder="Номи худро ворид кунед" style="padding:10px;border:2px solid #1a73e8;border-radius:8px;font-size:1rem">
+  <button onclick="salom()" style="padding:10px 20px;background:#1a73e8;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;margin-left:8px">Салом!</button>
+  <div id="out" style="margin-top:20px;font-size:1.2rem;color:#1a73e8"></div>
+  <script>
+    function salom() {
+      const nom = document.getElementById('nom').value;
+      document.getElementById('out').textContent = nom ? 'Салом, ' + nom + '! 👋' : 'Номи худро ворид кунед!';
+    }
+  </sc` + `ript>
+</body>
+</html>`,
+  list: `<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;padding:20px;max-width:400px;margin:0 auto">
+  <h2 style="color:#1a73e8">📝 Рӯйхати вазифаҳо</h2>
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+    <input id="inp" placeholder="Вазифа илова кунед..." style="flex:1;padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem">
+    <button onclick="add()" style="padding:8px 16px;background:#1a73e8;color:#fff;border:none;border-radius:8px;cursor:pointer">+</button>
+  </div>
+  <ul id="list" style="list-style:none;padding:0"></ul>
+  <script>
+    function add() {
+      const v = document.getElementById('inp').value.trim();
+      if(!v) return;
+      const li = document.createElement('li');
+      li.style.cssText = 'padding:10px 14px;background:#f0f4ff;margin-bottom:8px;border-radius:8px;display:flex;justify-content:space-between;align-items:center';
+      li.innerHTML = '<span>' + v + '</span><button onclick="this.parentElement.remove()" style="background:#f85149;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>';
+      document.getElementById('list').appendChild(li);
+      document.getElementById('inp').value='';
+    }
+  </sc` + `ript>
+</body>
+</html>`,
+  calc: `<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;display:flex;justify-content:center;padding:30px;background:#1a1a2e">
+  <div style="background:#16213e;border-radius:16px;padding:24px;min-width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.4)">
+    <div id="disp" style="background:#0f3460;color:#e94560;font-size:2rem;padding:14px;border-radius:10px;text-align:right;margin-bottom:14px;min-height:60px;word-break:break-all">0</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      ${['C','±','%','÷','7','8','9','×','4','5','6','-','1','2','3','+','0','.',  '='].map(k=>`<button onclick="press('${k}')" style="padding:14px;background:${k==='='?'#e94560':k==='C'?'#533483':'#1f4068'};color:#fff;border:none;border-radius:10px;font-size:1rem;cursor:pointer;grid-column:${k==='0'?'span 2':''}">${k}</button>`).join('')}
+    </div>
+    <script>
+      let cur='0',prev='',op='';
+      function press(k){
+        const d=document.getElementById('disp');
+        if(k==='C'){cur='0';prev='';op='';d.textContent='0';return;}
+        if('0123456789.'.includes(k)){cur=cur==='0'?k:cur+k;d.textContent=cur;return;}
+        if(k==='±'){cur=String(-parseFloat(cur));d.textContent=cur;return;}
+        if(k==='%'){cur=String(parseFloat(cur)/100);d.textContent=cur;return;}
+        if('÷×-+'.includes(k)){prev=cur;op=k;cur='0';return;}
+        if(k==='='){
+          const a=parseFloat(prev),b=parseFloat(cur);
+          cur=String(op==='+'?a+b:op==='-'?a-b:op==='×'?a*b:b?a/b:'Err');
+          d.textContent=cur;op='';prev='';
+        }
+      }
+    </sc` + `ript>
+  </div>
+</body>
+</html>`,
+  fib: `<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;padding:24px;background:#fff">
+  <h2 style="color:#1a73e8">Силсилаи Фибоначчи</h2>
+  <input type="number" id="n" value="10" min="1" max="30" style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:1rem;width:80px">
+  <button onclick="fib()" style="padding:8px 18px;background:#1a73e8;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-left:8px">Нишон деҳ</button>
+  <div id="res" style="margin-top:20px;display:flex;flex-wrap:wrap;gap:8px"></div>
+  <script>
+    function fib(){
+      const n=parseInt(document.getElementById('n').value)||10;
+      let a=0,b=1,res=document.getElementById('res');
+      res.innerHTML='';
+      for(let i=0;i<n;i++){
+        res.innerHTML+='<span style="padding:8px 14px;background:#e8f0fe;color:#1a73e8;border-radius:8px;font-weight:600">'+a+'</span>';
+        [a,b]=[b,a+b];
+      }
+    }
+    fib();
+  </sc` + `ript>
+</body>
+</html>`
+};
+
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById('tabPython').classList.toggle('active', lang==='python');
+  document.getElementById('tabHTML').classList.toggle('active', lang==='html');
+  document.getElementById('editorLabel').textContent = lang==='python'?'🐍 Python — Редактор':'🌐 HTML — Редактор';
+  document.getElementById('codeEditor').placeholder = lang==='python'?'# Коди Python-ро ин ҷо нависед...':'<!-- HTML-и худро ин ҷо нависед -->';
+  document.getElementById('codeEditor').value = '';
+
+  // Update examples
+  const strip = document.getElementById('examplesStrip');
+  if (lang==='html') {
+    strip.querySelectorAll('.ex-btn').forEach((b,i)=>{
+      const keys=Object.keys(htmlExamples);
+      b.textContent=['Hello World','Давр','Формуляр','Рӯйхат','Ҳисобкунак','Фибоначчи'][i];
+    });
+  } else {
+    strip.querySelectorAll('.ex-btn').forEach((b,i)=>{
+      b.textContent=['Hello World','Давр (цикл)','Функсия','Рӯйхат','Ҳисобкунак','Фибоначчи'][i];
+    });
+  }
+
+  if (lang==='html') {
+    document.getElementById('consoleOutput').style.display='none';
+    document.getElementById('htmlOutput').style.display='';
+  } else {
+    document.getElementById('consoleOutput').style.display='';
+    document.getElementById('htmlOutput').style.display='none';
+  }
+}
+
+function loadExample(key) {
+  const code = currentLang==='python' ? pyExamples[key] : htmlExamples[key];
+  if (code) { document.getElementById('codeEditor').value=code; updateCharCount(); }
+}
+
+function updateCharCount() {
+  const l = document.getElementById('codeEditor').value.length;
+  document.getElementById('charCount').textContent = l + ' символ';
+}
+
+// Ctrl+Enter to run
+document.getElementById('codeEditor').addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key==='Enter') { e.preventDefault(); runCode(); }
+  if (e.key==='Tab') { e.preventDefault(); const s=e.target.selectionStart; e.target.value=e.target.value.substring(0,s)+'    '+e.target.value.substring(e.target.selectionEnd); e.target.selectionStart=e.target.selectionEnd=s+4; }
+});
+
+function runCode() {
+  const code = document.getElementById('codeEditor').value.trim();
+  if (!code) return;
+
+  if (currentLang==='html') {
+    const iframe = document.getElementById('htmlOutput');
+    iframe.srcdoc = code;
+  } else {
+    runPython(code);
+  }
+}
+
+function runPython(code) {
+  const out = document.getElementById('consoleOutput');
+  let lines = ['<span class="console-line info">━━━ Иҷро оғоз шуд ━━━</span>'];
+  try {
+    const result = executePython(code);
+    if (result.output.length) {
+      result.output.forEach(l => lines.push(`<span class="console-line">${escHtml(l)}</span>`));
+    } else {
+      lines.push('<span class="console-line info">(вывод нест)</span>');
+    }
+    if (result.error) lines.push(`<span class="console-line err">❌ ${escHtml(result.error)}</span>`);
+  } catch(e) {
+    lines.push(`<span class="console-line err">❌ Хато: ${escHtml(e.message)}</span>`);
+  }
+  lines.push('<span class="console-line info">━━━ Анҷом ━━━</span>');
+  out.innerHTML = lines.join('\n');
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function executePython(code) {
+  const lines = code.split('\n');
+  let output = [];
+  let vars = {};
+  let error = null;
+  let i = 0;
+
+  function evalExpr(expr) {
+    expr = expr.trim();
+    if (!expr) return '';
+    // String
+    if ((expr.startsWith('"')&&expr.endsWith('"'))||(expr.startsWith("'")&&expr.endsWith("'"))) return expr.slice(1,-1);
+    // f-string
+    if (/^f["']/.test(expr)) {
+      let s = expr.slice(2,-1);
+      return s.replace(/\{([^}]+)\}/g, (_,k)=>{ try { return evalExpr(k.trim()); } catch { return k; } });
+    }
+    // Boolean
+    if (expr==='True') return true;
+    if (expr==='False') return false;
+    if (expr==='None') return null;
+    // Number
+    if (!isNaN(expr) && expr!=='') return Number(expr);
+    // Var
+    if (/^[a-zA-Z_]\w*$/.test(expr) && vars[expr]!==undefined) return vars[expr];
+    // List
+    if (expr.startsWith('[')&&expr.endsWith(']')) {
+      try { return JSON.parse(expr.replace(/'/g,'"')); } catch { return []; }
+    }
+    // Len
+    const lenM = expr.match(/^len\((.+)\)$/);
+    if (lenM) { const v = evalExpr(lenM[1]); return Array.isArray(v)?v.length:String(v).length; }
+    // Math
+    try {
+      let safe = expr.replace(/\*\*/g,'**').replace(/[a-zA-Z_]\w*/g, m => vars[m]!==undefined?vars[m]:m);
+      safe = safe.replace(/(\w+)\s*\*\*\s*(\w+)/g,'Math.pow($1,$2)');
+      return Function('"use strict";return('+safe+')')();
+    } catch { return expr; }
+  }
+
+  while (i < lines.length) {
+    let line = lines[i];
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) { i++; continue; }
+
+    // print
+    const printM = trimmed.match(/^print\((.+)\)$/s);
+    if (printM) {
+      try {
+        const inner = printM[1];
+        // Handle multiple args
+        const args = splitArgs(inner);
+        const vals = args.map(a => {
+          const e = a.trim();
+          if (e.startsWith('end=')) return null;
+          return String(evalExpr(e));
+        }).filter(v => v !== null);
+        output.push(vals.join(' '));
+      } catch(e) { output.push('[print хато: '+e.message+']'); }
+      i++; continue;
+    }
+
+    // Assignment
+    const assignM = trimmed.match(/^([a-zA-Z_]\w*)\s*=\s*(.+)$/);
+    if (assignM && !trimmed.includes('==')) {
+      try { vars[assignM[1]] = evalExpr(assignM[2]); } catch {}
+      i++; continue;
+    }
+
+    // for loop (simple)
+    const forM = trimmed.match(/^for\s+(\w+)\s+in\s+range\((.+)\)\s*:$/);
+    if (forM) {
+      const varName = forM[1];
+      const rangeArgs = forM[2].split(',').map(x=>Number(evalExpr(x.trim())));
+      let start=0,end=0,step=1;
+      if (rangeArgs.length===1){end=rangeArgs[0];}
+      else if (rangeArgs.length===2){[start,end]=rangeArgs;}
+      else {[start,end,step]=rangeArgs;}
+      const bodyLines = [];
+      i++;
+      while (i<lines.length && (lines[i].startsWith('    ')||lines[i].startsWith('\t'))) {
+        bodyLines.push(lines[i].replace(/^    |\t/,''));
+        i++;
+      }
+      for (let v=start; (step>0?v<end:v>end); v+=step) {
+        vars[varName]=v;
+        const sub = executePython(bodyLines.join('\n'));
+        output.push(...sub.output);
+        if (sub.error) { error=sub.error; break; }
+      }
+      continue;
+    }
+
+    // Function definition (skip body)
+    if (trimmed.startsWith('def ')) {
+      i++;
+      while (i<lines.length && (lines[i].startsWith('    ')||lines[i].startsWith('\t'))) i++;
+      continue;
+    }
+
+    i++;
+  }
+  return { output, error };
+}
+
+function splitArgs(s) {
+  const args=[]; let depth=0; let cur='';
+  for (const c of s) {
+    if ('([{'.includes(c)) depth++;
+    else if (')]}'.includes(c)) depth--;
+    else if (c===',' && depth===0) { args.push(cur); cur=''; continue; }
+    cur+=c;
+  }
+  if (cur.trim()) args.push(cur);
+  return args;
+}
+
+function clearAll() { document.getElementById('codeEditor').value=''; document.getElementById('consoleOutput').innerHTML=''; document.getElementById('htmlOutput').srcdoc=''; updateCharCount(); }
+function copyCode() { navigator.clipboard.writeText(document.getElementById('codeEditor').value); showAlert('Нусха гирифта шуд!'); }
+</script>
+</body>
+</html>

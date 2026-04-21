@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Чат — ПлатформаТЈ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="navbar-root"></div>
+
+<div style="padding:1.5rem 2rem;max-width:1200px;margin:0 auto">
+  <div class="chat-wrap">
+    <!-- ROOMS -->
+    <div class="chat-rooms">
+      <div class="chat-rooms-header">💬 Гуфтугӯҳо</div>
+      <div id="rooms-list"></div>
+      <div style="padding:1rem;border-top:1px solid var(--border);margin-top:auto">
+        <div style="font-size:0.8rem;color:var(--text-muted)">
+          📌 Дар чат иззатнок бошед.<br>Саволҳои барномасозӣ хуш омадед!
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT MAIN -->
+    <div class="chat-main">
+      <div class="chat-header">
+        <span id="room-icon">💬</span>
+        <span id="room-name">Гуфтугӯ интихоб кунед</span>
+        <span style="margin-left:auto;font-size:0.8rem;color:var(--text-muted)" id="room-count"></span>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div style="text-align:center;color:var(--text-muted);margin:auto">
+          <div style="font-size:3rem;margin-bottom:1rem">💬</div>
+          <div>Гуфтугӯро аз тарафи чап интихоб кунед</div>
+        </div>
+      </div>
+      <div class="chat-input-wrap" id="chat-input-wrap" style="display:none">
+        <input class="chat-input" id="chat-input" placeholder="Паём нависед..." maxlength="500">
+        <button class="chat-send" onclick="sendMsg()" title="Фиристодан">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+const user = Platform.requireAuth();
+document.getElementById('navbar-root').innerHTML = Platform.renderNavbar('chat');
+initNotifUI();
+ThemeManager.init();
+
+let currentRoom = null;
+let msgInterval = null;
+
+// Render rooms
+function renderRooms() {
+  const list = document.getElementById('rooms-list');
+  list.innerHTML = Chat.rooms.map(r => {
+    const msgs = Chat.getMsgs(r.id);
+    const last = msgs[msgs.length-1];
+    return `
+      <div class="room-item ${currentRoom===r.id?'active':''}" onclick="openRoom('${r.id}','${r.name}','${r.icon}')">
+        <span style="font-size:1.3rem">${r.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:0.875rem">${r.name}</div>
+          ${last?`<div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${Platform.escapeHtml(last.userName)}: ${Platform.escapeHtml(last.text.substring(0,30))}</div>`:'<div style="font-size:0.75rem;color:var(--text-muted)">Паём нест</div>'}
+        </div>
+        <span style="font-size:0.72rem;color:var(--text-muted)">${msgs.length}</span>
+      </div>`;
+  }).join('');
+}
+
+function openRoom(id, name, icon) {
+  currentRoom = id;
+  document.getElementById('room-name').textContent = name;
+  document.getElementById('room-icon').textContent = icon;
+  document.getElementById('chat-input-wrap').style.display = 'flex';
+  renderRooms();
+  loadMsgs();
+  if (msgInterval) clearInterval(msgInterval);
+  msgInterval = setInterval(loadMsgs, 3000);
+  document.getElementById('chat-input').focus();
+}
+
+function loadMsgs() {
+  if (!currentRoom) return;
+  const msgs = Chat.getMsgs(currentRoom);
+  const container = document.getElementById('chat-messages');
+  const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+  document.getElementById('room-count').textContent = msgs.length + ' паём';
+
+  if (!msgs.length) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);margin:auto"><div style="font-size:2rem">🔕</div><div>Ҳоло паёме нест. Аввалин бошед!</div></div>';
+    return;
+  }
+
+  container.innerHTML = msgs.map(m => {
+    const isOwn = m.userId === user.id;
+    return `
+      <div class="msg ${isOwn?'own':''}" id="msg-${m.id}">
+        <div class="msg-avatar">${m.avatar||'👤'}</div>
+        <div>
+          ${!isOwn?`<div class="msg-name">${Platform.escapeHtml(m.userName)}</div>`:''}
+          <div class="msg-bubble">${Platform.escapeHtml(m.text)}</div>
+          <div class="msg-time">${Chat.timeAgo(m.time)}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  if (atBottom) container.scrollTop = container.scrollHeight;
+}
+
+function sendMsg() {
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if (!text || !currentRoom) return;
+  Chat.send(currentRoom, user.id, user.name, user.avatar, text);
+  inp.value = '';
+  loadMsgs();
+  renderRooms();
+  const container = document.getElementById('chat-messages');
+  container.scrollTop = container.scrollHeight;
+}
+
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+});
+
+// Notif UI helper (shared)
+function initNotifUI() {
+  const bell = document.getElementById('notif-bell-wrap');
+  if (!bell) return;
+  updateNotifBadge();
+  setInterval(updateNotifBadge, 5000);
+  document.addEventListener('click', e => {
+    if (!bell.contains(e.target)) document.getElementById('notif-dropdown').classList.remove('open');
+  });
+}
+
+function updateNotifBadge() {
+  const count = Notifs.unreadCount(user.id);
+  const badge = document.getElementById('notif-count');
+  if (!badge) return;
+  badge.textContent = count;
+  badge.style.display = count ? '' : 'none';
+}
+
+function toggleNotif() {
+  const dd = document.getElementById('notif-dropdown');
+  dd.classList.toggle('open');
+  if (dd.classList.contains('open')) renderNotifs();
+}
+
+function renderNotifs() {
+  const notifs = Notifs.forUser(user.id).slice(0,15);
+  const dd = document.getElementById('notif-dropdown');
+  dd.innerHTML = `
+    <div class="notif-header">
+      <strong>🔔 Огоҳномаҳо</strong>
+      <button onclick="Notifs.markAll();renderNotifs();updateNotifBadge()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:0.8rem">Ҳама хонда</button>
+    </div>
+    ${notifs.length ? notifs.map(n=>`
+      <div class="notif-item ${n.read?'read':'unread'}" onclick="Notifs.markRead(${n.id});renderNotifs();updateNotifBadge()">
+        <div class="notif-icon">${n.icon}</div>
+        <div class="notif-text">
+          <div>${Platform.escapeHtml(n.msg)}</div>
+          <div class="notif-time">${Chat.timeAgo(n.time)}</div>
+        </div>
+      </div>`).join('') : '<div class="notif-empty">Огоҳнома нест 🎉</div>'}`;
+}
+
+renderRooms();
+openRoom('general', 'Умумӣ', '💬');
+</script>
+</body>
+</html>

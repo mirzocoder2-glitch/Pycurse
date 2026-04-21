@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Дохил шудан — ПлатформаТЈ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="login-page">
+  <div class="login-card fade-up">
+    <div style="text-align:center;margin-bottom:2rem">
+      <div style="width:60px;height:60px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:900;color:#fff;margin:0 auto 1rem">P</div>
+      <h1 style="font-size:1.5rem;font-weight:800;margin-bottom:0.3rem">ПлатформаТЈ</h1>
+      <p style="color:var(--text-muted);font-size:0.9rem">Ба ҳисоби худ дохил шавед</p>
+    </div>
+
+    <div id="alert-box"></div>
+
+    <div class="form-group">
+      <label class="form-label">👤 Логин</label>
+      <input type="text" id="username" class="form-control" placeholder="Номи корбар" autofocus>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🔒 Парол</label>
+      <div style="position:relative">
+        <input type="password" id="password" class="form-control" placeholder="Паролро ворид кунед" style="padding-right:3rem">
+        <button onclick="togglePass()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1.1rem" id="eye-btn">👁</button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;margin-top:0.5rem;padding:0.8rem;font-size:1rem" onclick="doLogin()" id="login-btn">
+      ▶ Дохил шудан
+    </button>
+
+    <div style="margin-top:1.5rem;padding:1rem;background:var(--bg3);border-radius:8px;font-size:0.82rem;color:var(--text-muted)">
+      <strong style="color:var(--text)">💡 Маълумоти намоишӣ:</strong><br>
+      Админ: <code style="color:var(--primary)">admin / admin123</code><br>
+      Хонанда: <code style="color:var(--primary)">student1 / pass123</code>
+    </div>
+
+    <div style="text-align:center;margin-top:1.5rem">
+      <a href="/" style="color:var(--text-muted);font-size:0.875rem;text-decoration:none">← Ба саҳифаи асосӣ</a>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+(async () => {
+  const user = await Session.init();
+  if (user) window.location.href = user.role === 'admin' ? '/admin.html' : '/dashboard.html';
+})();
+
+async function doLogin() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const alertBox = document.getElementById('alert-box');
+  const btn      = document.getElementById('login-btn');
+
+  if (!username || !password) {
+    alertBox.innerHTML = '<div class="alert alert-danger">⚠️ Логин ва пароли ворид кунед!</div>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Дохил шудан...';
+
+  try {
+    const res = await Session.login(username, password);
+    alertBox.innerHTML = `<div class="alert alert-success">✅ Хуш омадед, ${res.user.name}!</div>`;
+    setTimeout(() => {
+      window.location.href = res.user.role === 'admin' ? '/admin.html' : '/dashboard.html';
+    }, 700);
+  } catch (err) {
+    alertBox.innerHTML = `<div class="alert alert-danger">❌ ${err.message}</div>`;
+    document.getElementById('password').value = '';
+    btn.disabled = false;
+    btn.textContent = '▶ Дохил шудан';
+  }
+}
+
+function togglePass() {
+  const p = document.getElementById('password');
+  p.type = p.type === 'password' ? 'text' : 'password';
+  document.getElementById('eye-btn').textContent = p.type === 'password' ? '👁' : '🙈';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>

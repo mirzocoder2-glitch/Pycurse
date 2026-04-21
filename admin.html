@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Панели Админ — ПлатформаТЈ</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ===== UDEMY-STYLE ADMIN ===== */
+:root { --adm-sidebar:240px; }
+
+.adm-layout { display:flex; min-height:100vh; }
+
+.adm-sidebar {
+  width:var(--adm-sidebar); min-width:var(--adm-sidebar);
+  background:#1c1d1f; border-right:1px solid #3d3d3d;
+  display:flex; flex-direction:column;
+  position:fixed; top:0; left:0; height:100vh; z-index:50;
+  overflow-y:auto;
+}
+
+.adm-logo {
+  padding:1.2rem 1.5rem; border-bottom:1px solid #3d3d3d;
+  display:flex; align-items:center; gap:10px;
+}
+.adm-logo-icon {
+  width:36px; height:36px; background:var(--primary);
+  border-radius:8px; display:flex; align-items:center;
+  justify-content:center; font-weight:900; font-size:1rem; color:#000;
+}
+.adm-logo-text { font-size:0.95rem; font-weight:700; color:#fff; letter-spacing:.5px; }
+.adm-logo-sub { font-size:0.7rem; color:#6a6f73; font-weight:400; }
+
+.adm-nav { flex:1; padding:1rem 0; }
+.adm-nav-section { margin-bottom:0.3rem; }
+.adm-nav-label {
+  padding:0.5rem 1.5rem 0.2rem;
+  font-size:0.65rem; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; color:#6a6f73;
+}
+.adm-nav-link {
+  display:flex; align-items:center; gap:12px;
+  padding:0.65rem 1.5rem; color:#9fa3a9;
+  text-decoration:none; font-size:0.875rem; font-weight:500;
+  transition:all 0.15s; cursor:pointer; border:none; background:none;
+  width:100%; text-align:left;
+  border-left:3px solid transparent;
+}
+.adm-nav-link:hover { background:rgba(255,255,255,0.05); color:#fff; }
+.adm-nav-link.active { background:rgba(0,198,255,0.1); color:var(--primary); border-left-color:var(--primary); }
+.adm-nav-icon { font-size:1rem; width:20px; text-align:center; flex-shrink:0; }
+.adm-nav-badge { margin-left:auto; background:var(--primary); color:#000; border-radius:10px; padding:1px 7px; font-size:0.7rem; font-weight:700; }
+
+.adm-footer {
+  padding:1rem 1.5rem; border-top:1px solid #3d3d3d;
+  display:flex; align-items:center; gap:10px;
+}
+.adm-user-av {
+  width:32px; height:32px; border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.9rem; flex-shrink:0;
+}
+.adm-user-name { font-size:0.8rem; font-weight:600; color:#fff; }
+.adm-user-role { font-size:0.7rem; color:#6a6f73; }
+
+/* MAIN */
+.adm-main { margin-left:var(--adm-sidebar); flex:1; background:var(--bg); }
+
+.adm-topbar {
+  background:var(--bg2); border-bottom:1px solid var(--border);
+  padding:0 2rem; height:60px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:40;
+}
+.adm-topbar-title { font-size:1.1rem; font-weight:700; }
+.adm-topbar-right { display:flex; align-items:center; gap:1rem; }
+.adm-search {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:6px; padding:0.4rem 0.9rem; color:var(--text);
+  font-size:0.85rem; outline:none; width:220px;
+  transition:border-color 0.2s;
+}
+.adm-search:focus { border-color:var(--primary); }
+
+.adm-content { padding:2rem; }
+
+/* STAT CARDS — Udemy style */
+.udm-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:1.2rem; margin-bottom:2rem; }
+.udm-stat {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:10px; padding:1.4rem 1.6rem;
+  display:flex; align-items:flex-start; gap:1rem;
+  transition:transform 0.2s, box-shadow 0.2s;
+}
+.udm-stat:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.2); }
+.udm-stat-icon {
+  width:48px; height:48px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.3rem; flex-shrink:0;
+}
+.udm-stat-info { flex:1; }
+.udm-stat-num { font-size:1.9rem; font-weight:900; line-height:1.1; }
+.udm-stat-label { font-size:0.8rem; color:var(--text-muted); margin-top:3px; }
+.udm-stat-trend { font-size:0.75rem; margin-top:6px; }
+.trend-up { color:var(--success); }
+.trend-dn { color:var(--danger); }
+
+/* TABLE — Udemy style */
+.udm-table-wrap { background:var(--card); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.udm-table-header {
+  padding:1.2rem 1.5rem; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.8rem;
+}
+.udm-table-title { font-size:1rem; font-weight:700; }
+.udm-table-actions { display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; }
+.udm-filter {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:6px; padding:0.35rem 0.7rem; color:var(--text);
+  font-size:0.8rem; cursor:pointer; outline:none;
+}
+
+table.udm { width:100%; border-collapse:collapse; }
+table.udm thead th {
+  background:var(--bg2); padding:0.75rem 1rem;
+  text-align:left; font-size:0.72rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:1.2px; color:var(--text-muted);
+  border-bottom:1px solid var(--border);
+}
+table.udm tbody td {
+  padding:0.85rem 1rem; border-bottom:1px solid var(--border);
+  font-size:0.875rem; vertical-align:middle;
+}
+table.udm tbody tr:last-child td { border-bottom:none; }
+table.udm tbody tr:hover td { background:rgba(255,255,255,0.02); }
+
+.user-cell { display:flex; align-items:center; gap:10px; }
+.user-av {
+  width:36px; height:36px; border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem; flex-shrink:0;
+}
+.user-av-sm {
+  width:28px; height:28px; border-radius:50%;
+  background:var(--bg3);
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.85rem; flex-shrink:0; border:1px solid var(--border);
+}
+.user-info-name { font-weight:600; font-size:0.875rem; }
+.user-info-email { font-size:0.75rem; color:var(--text-muted); }
+
+/* ACTION BUTTONS */
+.act-btn {
+  width:30px; height:30px; border-radius:6px;
+  border:1px solid var(--border); background:transparent;
+  cursor:pointer; display:inline-flex; align-items:center;
+  justify-content:center; font-size:0.85rem; transition:all 0.15s;
+}
+.act-btn:hover { background:var(--bg3); border-color:var(--primary); }
+.act-btn.del:hover { background:rgba(239,68,68,0.1); border-color:var(--danger); }
+
+/* TABS — Udemy style */
+.udm-tabs {
+  display:flex; gap:0; border-bottom:2px solid var(--border);
+  margin-bottom:1.5rem; overflow-x:auto;
+}
+.udm-tab {
+  padding:0.7rem 1.4rem; border:none; background:none;
+  color:var(--text-muted); font-family:'Exo 2',sans-serif;
+  font-size:0.875rem; font-weight:600; cursor:pointer;
+  border-bottom:3px solid transparent; margin-bottom:-2px;
+  transition:all 0.2s; white-space:nowrap;
+}
+.udm-tab:hover { color:var(--text); }
+.udm-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+
+/* COURSE CARD — Udemy style */
+.course-udm {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:10px; overflow:hidden;
+  transition:transform 0.2s, box-shadow 0.2s;
+}
+.course-udm:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(0,0,0,0.25); }
+.course-udm-thumb {
+  height:140px; background:linear-gradient(135deg,var(--bg3),var(--bg2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:3.5rem; position:relative;
+}
+.course-udm-body { padding:1rem; }
+.course-udm-title { font-weight:700; font-size:0.9rem; margin-bottom:4px; line-height:1.3; }
+.course-udm-meta { font-size:0.75rem; color:var(--text-muted); margin-bottom:0.8rem; }
+.course-udm-footer { display:flex; gap:0.5rem; flex-wrap:wrap; }
+.course-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1rem; }
+
+/* TEST CARD */
+.test-udm {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:10px; padding:1.2rem;
+  display:flex; align-items:flex-start; gap:1rem;
+  transition:border-color 0.2s;
+}
+.test-udm:hover { border-color:var(--primary); }
+.test-udm-icon {
+  width:44px; height:44px; border-radius:10px;
+  background:rgba(0,198,255,0.1);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.2rem; flex-shrink:0;
+}
+.test-udm-info { flex:1; min-width:0; }
+.test-udm-title { font-weight:700; margin-bottom:4px; }
+.test-udm-meta { font-size:0.78rem; color:var(--text-muted); }
+
+/* MODAL — Udemy style */
+.udm-modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.75);
+  backdrop-filter:blur(6px); z-index:999;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity 0.25s;
+}
+.udm-modal-overlay.open { opacity:1; pointer-events:all; }
+.udm-modal {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; width:94%; max-width:580px;
+  max-height:92vh; overflow-y:auto;
+  transform:scale(0.96) translateY(10px);
+  transition:transform 0.25s;
+  box-shadow:0 24px 80px rgba(0,0,0,0.5);
+}
+.udm-modal-overlay.open .udm-modal { transform:scale(1) translateY(0); }
+.udm-modal-head {
+  padding:1.4rem 1.6rem; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; background:var(--card); z-index:1;
+}
+.udm-modal-head h3 { font-size:1.05rem; font-weight:700; }
+.udm-modal-close {
+  width:30px; height:30px; border-radius:50%;
+  background:var(--bg3); border:none; cursor:pointer;
+  color:var(--text-muted); font-size:1rem;
+  display:flex; align-items:center; justify-content:center;
+  transition:background 0.2s;
+}
+.udm-modal-close:hover { background:var(--border); color:var(--text); }
+.udm-modal-body { padding:1.6rem; }
+.udm-modal-foot {
+  padding:1rem 1.6rem; border-top:1px solid var(--border);
+  display:flex; justify-content:flex-end; gap:0.7rem;
+}
+
+/* EMPTY STATE */
+.empty-state {
+  text-align:center; padding:4rem 2rem;
+  color:var(--text-muted);
+}
+.empty-icon { font-size:3rem; margin-bottom:1rem; opacity:0.5; }
+.empty-title { font-size:1rem; font-weight:600; margin-bottom:0.5rem; color:var(--text); }
+.empty-desc { font-size:0.875rem; margin-bottom:1.5rem; }
+
+/* PROGRESS BAR thin */
+.prog-thin { height:4px; background:var(--bg3); border-radius:4px; overflow:hidden; margin-top:6px; }
+.prog-thin-fill { height:100%; background:linear-gradient(90deg,var(--primary),var(--primary-dark)); border-radius:4px; }
+
+/* TOGGLE */
+.toggle-wrap { display:flex; align-items:center; gap:8px; }
+.toggle { position:relative; width:40px; height:22px; }
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-slider {
+  position:absolute; inset:0; background:var(--bg3);
+  border-radius:22px; cursor:pointer; transition:0.3s;
+  border:1px solid var(--border);
+}
+.toggle-slider:before {
+  content:''; position:absolute;
+  width:16px; height:16px; left:2px; top:2px;
+  background:#fff; border-radius:50%; transition:0.3s;
+}
+.toggle input:checked + .toggle-slider { background:var(--primary); border-color:var(--primary); }
+.toggle input:checked + .toggle-slider:before { transform:translateX(18px); }
+
+@media(max-width:900px){
+  .adm-sidebar{display:none}
+  .adm-main{margin-left:0}
+  .udm-stats{grid-template-columns:1fr 1fr}
+}
+@media(max-width:500px){
+  .udm-stats{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="adm-layout">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="adm-sidebar">
+  <div class="adm-logo">
+    <div class="adm-logo-icon">P</div>
+    <div>
+      <div class="adm-logo-text">ПлатформаТЈ</div>
+      <div class="adm-logo-sub">Панели Администратор</div>
+    </div>
+  </div>
+
+  <nav class="adm-nav">
+    <div class="adm-nav-section">
+      <div class="adm-nav-label">Асосӣ</div>
+      <button class="adm-nav-link active" onclick="showSection('dashboard',this)">
+        <span class="adm-nav-icon">📊</span> Дашборд
+      </button>
+      <button class="adm-nav-link" onclick="showSection('analytics',this)">
+        <span class="adm-nav-icon">📈</span> Аналитика
+      </button>
+    </div>
+
+    <div class="adm-nav-section">
+      <div class="adm-nav-label">Мундариҷа</div>
+      <button class="adm-nav-link" onclick="showSection('courses',this)">
+        <span class="adm-nav-icon">📚</span> Курсҳо
+        <span class="adm-nav-badge" id="nb-courses">0</span>
+      </button>
+      <button class="adm-nav-link" onclick="showSection('topics',this)">
+        <span class="adm-nav-icon">🎬</span> Мавзӯъ & Видео
+      </button>
+      <button class="adm-nav-link" onclick="showSection('tests',this)">
+        <span class="adm-nav-icon">📝</span> Тестҳо
+        <span class="adm-nav-badge" id="nb-tests">0</span>
+      </button>
+      <button class="adm-nav-link" onclick="showSection('tasks',this)">
+        <span class="adm-nav-icon">💡</span> Масъалаҳо
+        <span class="adm-nav-badge" id="nb-tasks">0</span>
+      </button>
+      <button class="adm-nav-link" onclick="showSection('schedule',this)">
+        <span class="adm-nav-icon">📅</span> Ҷадвал
+      </button>
+    </div>
+
+    <div class="adm-nav-section">
+      <div class="adm-nav-label">Корбарон</div>
+      <button class="adm-nav-link" onclick="showSection('users',this)">
+        <span class="adm-nav-icon">👥</span> Ҳамаи корбарон
+        <span class="adm-nav-badge" id="nb-users">0</span>
+      </button>
+      <button class="adm-nav-link" onclick="showSection('students',this)">
+        <span class="adm-nav-icon">👨‍🎓</span> Хонандагон
+      </button>
+    </div>
+
+    <div class="adm-nav-section">
+      <div class="adm-nav-label">Платформа</div>
+      <a href="/index.html" class="adm-nav-link"><span class="adm-nav-icon">🏠</span> Сайти асосӣ</a>
+      <a href="/reyting.html" class="adm-nav-link"><span class="adm-nav-icon">🏆</span> Рейтинг</a>
+      <a href="/chat.html" class="adm-nav-link"><span class="adm-nav-icon">💬</span> Чат</a>
+    </div>
+  </nav>
+
+  <div class="adm-footer">
+    <div class="adm-user-av" id="adm-av">👨‍💼</div>
+    <div>
+      <div class="adm-user-name" id="adm-name">Администратор</div>
+      <div class="adm-user-role">Суперадмин</div>
+    </div>
+    <button onclick="Platform.logout()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#6a6f73;font-size:1rem" title="Баромадан">⏻</button>
+  </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<div class="adm-main">
+
+  <!-- Topbar -->
+  <div class="adm-topbar">
+    <div class="adm-topbar-title" id="topbar-title">📊 Дашборд</div>
+    <div class="adm-topbar-right">
+      <input class="adm-search" placeholder="🔍 Ҷустуҷӯ..." id="global-search" oninput="globalSearch(this.value)">
+      <div style="position:relative" id="notif-bell-wrap">
+        <span style="cursor:pointer;font-size:1.2rem" onclick="toggleNotif()">🔔</span>
+        <span class="notif-badge" id="notif-count" style="display:none">0</span>
+        <div class="notif-dropdown" id="notif-dropdown"></div>
+      </div>
+      <button class="theme-btn" id="theme-btn" onclick="ThemeManager.toggle()">🌙</button>
+      <a href="/index.html" class="btn btn-outline btn-sm">← Сайт</a>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="adm-content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="sec-dashboard">
+      <div class="udm-stats" id="dash-stats"></div>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+        <!-- Recent users -->
+        <div class="udm-table-wrap">
+          <div class="udm-table-header">
+            <span class="udm-table-title">👥 Охирин корбарон</span>
+            <button class="btn btn-outline btn-sm" onclick="showSection('users',null)">Ҳамааш</button>
+          </div>
+          <div id="recent-users"></div>
+        </div>
+        <!-- Quick stats -->
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div class="card" style="padding:1.2rem">
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px">Мундариҷа</div>
+            <div id="content-mini-stats"></div>
+          </div>
+          <div class="card" style="padding:1.2rem">
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px">Амалиёти зуд</div>
+            <div style="display:flex;flex-direction:column;gap:0.5rem">
+              <button class="btn btn-primary btn-sm" style="justify-content:center" onclick="showSection('users',null);setTimeout(()=>openModal('user'),100)">+ Корбар илова кардан</button>
+              <button class="btn btn-outline btn-sm" style="justify-content:center" onclick="showSection('courses',null);setTimeout(()=>openModal('course'),100)">+ Курс илова кардан</button>
+              <button class="btn btn-outline btn-sm" style="justify-content:center" onclick="showSection('tests',null);setTimeout(()=>openModal('test'),100)">+ Тест илова кардан</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Top students -->
+      <div class="udm-table-wrap">
+        <div class="udm-table-header">
+          <span class="udm-table-title">🏆 Беҳтарин хонандагон</span>
+          <a href="/reyting.html" class="btn btn-outline btn-sm">Рейтинг →</a>
+        </div>
+        <div id="top-students"></div>
+      </div>
+    </div>
+
+    <!-- ===== ANALYTICS ===== -->
+    <div id="sec-analytics" style="display:none">
+      <div class="udm-stats" id="analytics-stats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+        <div class="card">
+          <div class="card-header"><span class="card-title">📊 Пешрафти курсҳо</span></div>
+          <div id="course-analytics"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">📝 Натиҷаи тестҳо</span></div>
+          <div id="test-analytics"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== COURSES ===== -->
+    <div id="sec-courses" style="display:none">
+      <div class="udm-table-header" style="margin-bottom:1.5rem;padding:0">
+        <div>
+          <h2 style="font-size:1.2rem;font-weight:800">📚 Курсҳо</h2>
+          <p style="color:var(--text-muted);font-size:0.875rem" id="courses-count-label"></p>
+        </div>
+        <div class="udm-table-actions">
+          <select class="udm-filter" id="course-level-filter" onchange="renderCourses()">
+            <option value="">Ҳама сатҳ</option>
+            <option>Ибтидоӣ</option><option>Миёна</option><option>Мураккаб</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModal('course')">+ Курс илова кардан</button>
+        </div>
+      </div>
+      <div class="course-grid" id="courses-grid"></div>
+    </div>
+
+    <!-- ===== TOPICS ===== -->
+    <div id="sec-topics" style="display:none">
+      <div class="udm-table-header" style="padding:0;margin-bottom:1.5rem">
+        <div>
+          <h2 style="font-size:1.2rem;font-weight:800">🎬 Мавзӯъ & Видео</h2>
+          <p style="color:var(--text-muted);font-size:0.875rem">Дарсҳо ва видеоматериалҳоро идора кунед</p>
+        </div>
+        <div class="udm-table-actions">
+          <select class="udm-filter" id="topic-course-filter" onchange="renderTopics()">
+            <option value="">Ҳама курсҳо</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModal('topic')">+ Мавзӯъ илова кардан</button>
+        </div>
+      </div>
+      <div class="alert alert-info" style="margin-bottom:1.5rem">📁 Видеоро аз компютери худ интихоб кунед. Он дар браузер сабт мешавад (localStorage).</div>
+      <div class="udm-table-wrap" id="topics-table-wrap"></div>
+    </div>
+
+    <!-- ===== TESTS ===== -->
+    <div id="sec-tests" style="display:none">
+      <div class="udm-table-header" style="padding:0;margin-bottom:1.5rem">
+        <div>
+          <h2 style="font-size:1.2rem;font-weight:800">📝 Тестҳо</h2>
+          <p style="color:var(--text-muted);font-size:0.875rem" id="tests-count-label"></p>
+        </div>
+        <div class="udm-table-actions">
+          <select class="udm-filter" id="test-course-filter" onchange="renderTests()">
+            <option value="">Ҳама курсҳо</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModal('test')">+ Тест илова кардан</button>
+        </div>
+      </div>
+      <div style="display:grid;gap:0.8rem" id="tests-list"></div>
+    </div>
+
+    <!-- ===== TASKS ===== -->
+    <div id="sec-tasks" style="display:none">
+      <div class="udm-table-header" style="padding:0;margin-bottom:1.5rem">
+        <div>
+          <h2 style="font-size:1.2rem;font-weight:800">💡 Масъалаҳо</h2>
+          <p style="color:var(--text-muted);font-size:0.875rem" id="tasks-count-label"></p>
+        </div>
+        <div class="udm-table-actions">
+          <select class="udm-filter" id="task-diff-filter" onchange="renderTasks()">
+            <option value="">Ҳама мушкилӣ</option>
+            <option value="easy">Осон</option><option value="medium">Миёна</option><option value="hard">Мушкил</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModal('task')">+ Масъала илова кардан</button>
+        </div>
+      </div>
+      <div class="udm-table-wrap" id="tasks-table-wrap"></div>
+    </div>
+
+    <!-- ===== SCHEDULE ===== -->
+    <div id="sec-schedule" style="display:none">
+      <div class="udm-table-header" style="padding:0;margin-bottom:1.5rem">
+        <div><h2 style="font-size:1.2rem;font-weight:800">📅 Ҷадвали дарсҳо</h2></div>
+        <div class="udm-table-actions">
+          <a href="/jadval.html" class="btn btn-outline btn-sm">📅 Ҷадвали пурра →</a>
+        </div>
+      </div>
+      <div class="card" style="text-align:center;padding:3rem">
+        <div style="font-size:3rem;margin-bottom:1rem">📅</div>
+        <div style="font-weight:700;margin-bottom:0.5rem">Ҷадвали дарсҳо</div>
+        <p style="color:var(--text-muted);margin-bottom:1.5rem">Барои идоракунии ҷадвал ба саҳифаи ҷадвал равед</p>
+        <a href="/jadval.html" class="btn btn-primary">📅 Кушодан</a>
+      </div>
+    </div>
+
+    <!-- ===== USERS ===== -->
+    <div id="sec-users" style="display:none">
+      <div class="udm-table-header" style="padding:0;margin-bottom:1.5rem">
+        <div>
+          <h2 style="font-size:1.2rem;font-weight:800">👥 Корбарон</h2>
+          <p style="color:var(--text-muted);font-size:0.875rem" id="users-count-label"></p>
+        </div>
+        <div class="udm-table-actions">
+          <select class="udm-filter" id="user-role-filter" onchange="renderUsers()">
+            <option value="">Ҳама нақш</option>
+            <option value="student">Хонандагон</option>
+            <option value="admin">Администраторон</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModal('user')">+ Корбар илова кардан</button>
+        </div>
+      </div>
+      <div class="udm-table-wrap">
+        <table class="udm" id="users-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Корбар</th><th>Логин</th><th>Нақш</th>
+              <th>Нуқтаҳо</th><th>Сана</th><th>Амалиёт</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== STUDENTS ===== -->
+    <div id="sec-students" style="display:none">
+      <div class="udm-table-header" style="padding:0;margin-bottom:1.5rem">
+        <div><h2 style="font-size:1.2rem;font-weight:800">👨‍🎓 Хонандагон</h2></div>
+      </div>
+      <div class="udm-table-wrap">
+        <table class="udm">
+          <thead><tr><th>Хонанда</th><th>Нуқтаҳо</th><th>Тестҳо</th><th>Миёна%</th><th>Ҷой</th></tr></thead>
+          <tbody id="students-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /adm-content -->
+</div><!-- /adm-main -->
+</div><!-- /adm-layout -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- USER MODAL -->
+<div class="udm-modal-overlay" id="modal-user">
+  <div class="udm-modal">
+    <div class="udm-modal-head">
+      <h3 id="um-title">👤 Корбар илова кардан</h3>
+      <button class="udm-modal-close" onclick="CM('user')">✕</button>
+    </div>
+    <div class="udm-modal-body">
+      <input type="hidden" id="u-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="form-group"><label class="form-label">Ном ва насаб *</label><input id="u-name" class="form-control" placeholder="Алишер Раҳимов"></div>
+        <div class="form-group"><label class="form-label">Логин *</label><input id="u-uname" class="form-control" placeholder="alisher123"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="form-group"><label class="form-label">Парол *</label><input id="u-pass" type="password" class="form-control" placeholder="Парол"></div>
+        <div class="form-group"><label class="form-label">Email</label><input id="u-email" type="email" class="form-control" placeholder="email@mail.tj"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Нақш</label>
+        <div style="display:flex;gap:1rem;margin-top:8px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem">
+            <input type="radio" name="u-role" value="student" checked style="accent-color:var(--primary)"> 👨‍🎓 Хонанда
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem">
+            <input type="radio" name="u-role" value="admin" style="accent-color:var(--primary)"> 👨‍💼 Администратор
+          </label>
+        </div>
+      </div>
+      <div id="u-alert"></div>
+    </div>
+    <div class="udm-modal-foot">
+      <button class="btn btn-outline" onclick="CM('user')">Бекор кардан</button>
+      <button class="btn btn-primary" onclick="saveUser()">💾 Сабт кардан</button>
+    </div>
+  </div>
+</div>
+
+<!-- COURSE MODAL -->
+<div class="udm-modal-overlay" id="modal-course">
+  <div class="udm-modal">
+    <div class="udm-modal-head">
+      <h3 id="cm-title">📚 Курс илова кардан</h3>
+      <button class="udm-modal-close" onclick="CM('course')">✕</button>
+    </div>
+    <div class="udm-modal-body">
+      <input type="hidden" id="c-id">
+      <div style="display:grid;grid-template-columns:80px 1fr;gap:1rem">
+        <div class="form-group"><label class="form-label">Emoji</label><input id="c-icon" class="form-control" placeholder="🐍" maxlength="4" style="text-align:center;font-size:1.5rem"></div>
+        <div class="form-group"><label class="form-label">Номи курс *</label><input id="c-title" class="form-control" placeholder="Асосҳои Python"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Тавсиф</label><textarea id="c-desc" class="form-control" style="min-height:80px" placeholder="Тавсифи пурраи курс..."></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+        <div class="form-group"><label class="form-label">Сатҳ</label><select id="c-level" class="form-control"><option>Ибтидоӣ</option><option>Миёна</option><option>Мураккаб</option></select></div>
+        <div class="form-group"><label class="form-label">Мӯҳлат</label><input id="c-dur" class="form-control" placeholder="40 соат"></div>
+        <div class="form-group"><label class="form-label">Категория</label><select id="c-cat" class="form-control"><option value="programming">Барномасозӣ</option><option value="web">Веб</option><option value="cs">Информатика</option><option value="other">Дигар</option></select></div>
+      </div>
+      <div id="c-alert"></div>
+    </div>
+    <div class="udm-modal-foot">
+      <button class="btn btn-outline" onclick="CM('course')">Бекор кардан</button>
+      <button class="btn btn-primary" onclick="saveCourse()">💾 Сабт кардан</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOPIC MODAL -->
+<div class="udm-modal-overlay" id="modal-topic">
+  <div class="udm-modal">
+    <div class="udm-modal-head">
+      <h3 id="tm-title">🎬 Мавзӯъ илова кардан</h3>
+      <button class="udm-modal-close" onclick="CM('topic')">✕</button>
+    </div>
+    <div class="udm-modal-body">
+      <input type="hidden" id="t-id">
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem">
+        <div class="form-group"><label class="form-label">Курс</label><select id="t-course" class="form-control"></select></div>
+        <div class="form-group"><label class="form-label">Тартиб</label><input id="t-order" type="number" class="form-control" value="1" min="1"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Унвони мавзӯъ *</label><input id="t-title" class="form-control" placeholder="Тағйирпазирҳо дар Python"></div>
+      <div class="form-group"><label class="form-label">Тавсиф</label><textarea id="t-desc" class="form-control" placeholder="Тавсифи мавзӯъ..."></textarea></div>
+      <div class="form-group">
+        <label class="form-label">🎬 Видео аз компютер</label>
+        <div style="border:2px dashed var(--border);border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;transition:border-color 0.2s" onclick="document.getElementById('t-video').click()" id="video-drop-zone">
+          <div style="font-size:2rem;margin-bottom:0.5rem">📁</div>
+          <div style="font-size:0.875rem;color:var(--text-muted)">Видеофайлро интихоб кунед</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">MP4, WebM, AVI — то 100 МБ</div>
+        </div>
+        <input type="file" id="t-video" accept="video/*" style="display:none">
+        <div id="t-vinfo" style="margin-top:8px;font-size:0.82rem;color:var(--text-muted)"></div>
+      </div>
+      <div id="t-alert"></div>
+    </div>
+    <div class="udm-modal-foot">
+      <button class="btn btn-outline" onclick="CM('topic')">Бекор кардан</button>
+      <button class="btn btn-primary" onclick="saveTopic()">💾 Сабт кардан</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEST MODAL -->
+<div class="udm-modal-overlay" id="modal-test">
+  <div class="udm-modal" style="max-width:700px">
+    <div class="udm-modal-head">
+      <h3 id="tsm-title">📝 Тест илова кардан</h3>
+      <button class="udm-modal-close" onclick="CM('test')">✕</button>
+    </div>
+    <div class="udm-modal-body">
+      <input type="hidden" id="ts-id">
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem">
+        <div class="form-group"><label class="form-label">Курс</label><select id="ts-course" class="form-control"></select></div>
+        <div class="form-group"><label class="form-label">Вақти иҷро (дақ)</label><input id="ts-time" type="number" class="form-control" value="30" min="5"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Унвони тест *</label><input id="ts-title" class="form-control" placeholder="Санҷиши Python — Асос"></div>
+      <div class="form-group"><label class="form-label">Тавсиф</label><input id="ts-desc" class="form-control" placeholder="Тавсифи тест..."></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:1rem 0;border-top:1px solid var(--border);margin-top:0.5rem">
+        <div>
+          <strong>Саволҳо</strong>
+          <span style="color:var(--text-muted);font-size:0.8rem;margin-left:8px" id="q-count-label">0 савол</span>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="addQ()">+ Савол илова кардан</button>
+      </div>
+      <div id="q-container"></div>
+      <div id="ts-alert"></div>
+    </div>
+    <div class="udm-modal-foot">
+      <button class="btn btn-outline" onclick="CM('test')">Бекор кардан</button>
+      <button class="btn btn-primary" onclick="saveTest()">💾 Сабт кардан</button>
+    </div>
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="udm-modal-overlay" id="modal-task">
+  <div class="udm-modal" style="max-width:660px">
+    <div class="udm-modal-head">
+      <h3 id="tkm-title">💡 Масъала илова кардан</h3>
+      <button class="udm-modal-close" onclick="CM('task')">✕</button>
+    </div>
+    <div class="udm-modal-body">
+      <input type="hidden" id="tk-id">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:1rem">
+        <div class="form-group"><label class="form-label">Курс</label><select id="tk-course" class="form-control"></select></div>
+        <div class="form-group"><label class="form-label">Мушкилӣ</label><select id="tk-diff" class="form-control"><option value="easy">Осон</option><option value="medium">Миёна</option><option value="hard">Мушкил</option></select></div>
+        <div class="form-group"><label class="form-label">Забон</label><select id="tk-lang" class="form-control"><option value="python">🐍 Python</option><option value="html">🌐 HTML</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Унвон *</label><input id="tk-title" class="form-control" placeholder="Ҳисоббаровар"></div>
+      <div class="form-group"><label class="form-label">Шарти масъала</label><textarea id="tk-desc" class="form-control" style="min-height:80px" placeholder="Шарти масъаларо ба таври возеҳ нависед..."></textarea></div>
+      <div class="form-group"><label class="form-label">Коди ибтидоӣ</label><textarea id="tk-code" class="form-control" style="font-family:'Fira Code',monospace;font-size:0.85rem;min-height:120px;background:#0d1117;color:#e6edf3"></textarea></div>
+      <div id="tk-alert"></div>
+    </div>
+    <div class="udm-modal-foot">
+      <button class="btn btn-outline" onclick="CM('task')">Бекор кардан</button>
+      <button class="btn btn-primary" onclick="saveTask()">💾 Сабт кардан</button>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+const user = Platform.requireAuth('admin');
+document.getElementById('adm-av').textContent = user.avatar;
+document.getElementById('adm-name').textContent = user.name;
+ThemeManager.init();
+
+// Update theme btn label
+const tb = document.getElementById('theme-btn');
+if(tb) tb.textContent = document.body.classList.contains('light') ? '🌙' : '☀️';
+
+// ===== MODAL HELPERS =====
+const OM = id => document.getElementById('modal-'+id).classList.add('open');
+const CM = id => document.getElementById('modal-'+id).classList.remove('open');
+document.querySelectorAll('.udm-modal-overlay').forEach(el =>
+  el.addEventListener('click', e => { if(e.target===el) el.classList.remove('open'); })
+);
+
+function openModal(type) {
+  clearForm(type);
+  if(['topic','test','task'].includes(type)) fillCourseSelect(type);
+  OM(type);
+}
+
+function clearForm(t) {
+  if(t==='user'){['u-id','u-name','u-uname','u-pass','u-email'].forEach(x=>document.getElementById(x).value='');document.querySelector('input[name="u-role"][value="student"]').checked=true;document.getElementById('u-alert').innerHTML='';document.getElementById('um-title').textContent='👤 Корбар илова кардан';}
+  if(t==='course'){['c-id','c-icon','c-title','c-desc','c-dur'].forEach(x=>document.getElementById(x).value='');document.getElementById('c-level').value='Ибтидоӣ';document.getElementById('c-cat').value='programming';document.getElementById('c-alert').innerHTML='';document.getElementById('cm-title').textContent='📚 Курс илова кардан';}
+  if(t==='topic'){['t-id','t-title','t-desc'].forEach(x=>document.getElementById(x).value='');document.getElementById('t-order').value=1;document.getElementById('t-video').value='';document.getElementById('t-vinfo').textContent='';document.getElementById('t-alert').innerHTML='';document.getElementById('tm-title').textContent='🎬 Мавзӯъ илова кардан';}
+  if(t==='test'){['ts-id','ts-title','ts-desc'].forEach(x=>document.getElementById(x).value='');document.getElementById('ts-time').value=30;document.getElementById('q-container').innerHTML='';document.getElementById('ts-alert').innerHTML='';document.getElementById('tsm-title').textContent='📝 Тест илова кардан';qCount=0;updateQCount();}
+  if(t==='task'){['tk-id','tk-title','tk-desc','tk-code'].forEach(x=>document.getElementById(x).value='');document.getElementById('tk-diff').value='easy';document.getElementById('tk-lang').value='python';document.getElementById('tk-alert').innerHTML='';document.getElementById('tkm-title').textContent='💡 Масъала илова кардан';}
+}
+
+function fillCourseSelect(type) {
+  const prefix = type==='topic'?'t':type==='test'?'ts':'tk';
+  const sel = document.getElementById(prefix+'-course');
+  if(!sel) return;
+  sel.innerHTML = Platform.getCourses().map(c=>`<option value="${c.id}">${c.icon} ${c.title}</option>`).join('');
+}
+
+// ===== SECTION SWITCH =====
+const sections = ['dashboard','analytics','courses','topics','tests','tasks','schedule','users','students'];
+const titles = {dashboard:'📊 Дашборд',analytics:'📈 Аналитика',courses:'📚 Курсҳо',topics:'🎬 Мавзӯъ & Видео',tests:'📝 Тестҳо',tasks:'💡 Масъалаҳо',schedule:'📅 Ҷадвал',users:'👥 Корбарон',students:'👨‍🎓 Хонандагон'};
+const renderers = {dashboard:renderDashboard,analytics:renderAnalytics,courses:renderCourses,topics:renderTopics,tests:renderTests,tasks:renderTasks,schedule:()=>{},users:renderUsers,students:renderStudents};
+
+function showSection(sec, el) {
+  sections.forEach(s => document.getElementById('sec-'+s).style.display = s===sec?'':'none');
+  document.querySelectorAll('.adm-nav-link').forEach(a => a.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('topbar-title').textContent = titles[sec]||sec;
+  renderers[sec]();
+}
+
+// ===== BADGES =====
+function updateBadges() {
+  document.getElementById('nb-courses').textContent = Platform.getCourses().length;
+  document.getElementById('nb-tests').textContent = Platform.getTests().length;
+  document.getElementById('nb-tasks').textContent = Platform.getTasks().length;
+  document.getElementById('nb-users').textContent = Platform.getUsers().length;
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  updateBadges();
+  const users = Platform.getUsers();
+  const students = users.filter(u=>u.role==='student');
+  const courses = Platform.getCourses();
+  const tests = Platform.getTests();
+  const tasks = Platform.getTasks();
+  const results = Platform.getResults();
+  const avgScore = results.length ? Math.round(results.reduce((a,r)=>a+r.percent,0)/results.length) : 0;
+
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="udm-stat">
+      <div class="udm-stat-icon" style="background:rgba(0,198,255,.12)">👥</div>
+      <div class="udm-stat-info">
+        <div class="udm-stat-num" style="color:var(--primary)">${users.length}</div>
+        <div class="udm-stat-label">Ҳамаи корбарон</div>
+        <div class="udm-stat-trend trend-up">↑ ${students.length} хонанда</div>
+      </div>
+    </div>
+    <div class="udm-stat">
+      <div class="udm-stat-icon" style="background:rgba(16,185,129,.12)">📚</div>
+      <div class="udm-stat-info">
+        <div class="udm-stat-num" style="color:var(--success)">${courses.length}</div>
+        <div class="udm-stat-label">Курсҳо</div>
+        <div class="udm-stat-trend">${Platform.getTopics().length} мавзӯъ</div>
+      </div>
+    </div>
+    <div class="udm-stat">
+      <div class="udm-stat-icon" style="background:rgba(245,158,11,.12)">📝</div>
+      <div class="udm-stat-info">
+        <div class="udm-stat-num" style="color:var(--warning)">${tests.length}</div>
+        <div class="udm-stat-label">Тестҳо</div>
+        <div class="udm-stat-trend">${results.length} иҷро шуд</div>
+      </div>
+    </div>
+    <div class="udm-stat">
+      <div class="udm-stat-icon" style="background:rgba(239,68,68,.12)">⭐</div>
+      <div class="udm-stat-info">
+        <div class="udm-stat-num" style="color:var(--danger)">${avgScore}%</div>
+        <div class="udm-stat-label">Миёнаи тестҳо</div>
+        <div class="udm-stat-trend">${tasks.length} масъала мавҷуд</div>
+      </div>
+    </div>`;
+
+  // Recent users
+  document.getElementById('recent-users').innerHTML = `
+    <table class="udm">
+      <thead><tr><th>Корбар</th><th>Нақш</th><th>Нуқтаҳо</th><th>Амалиёт</th></tr></thead>
+      <tbody>${users.slice(-5).reverse().map(u=>`
+        <tr>
+          <td><div class="user-cell"><div class="user-av">${u.avatar}</div><div><div class="user-info-name">${Platform.escapeHtml(u.name)}</div><div class="user-info-email">${u.email||u.username}</div></div></div></td>
+          <td><span class="badge ${u.role==='admin'?'badge-warning':'badge-primary'}">${u.role==='admin'?'Админ':'Хонанда'}</span></td>
+          <td><strong style="color:var(--primary)">${u.points||0}</strong></td>
+          <td><button class="act-btn" onclick="editUser(${u.id})">✏️</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  // Content mini
+  document.getElementById('content-mini-stats').innerHTML = [
+    ['📚','Курсҳо',courses.length,'var(--success)'],
+    ['🎬','Мавзӯъҳо',Platform.getTopics().length,'var(--primary)'],
+    ['📝','Тестҳо',tests.length,'var(--warning)'],
+    ['💡','Масъалаҳо',tasks.length,'var(--danger)'],
+  ].map(([icon,label,val,color])=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:0.875rem">${icon} ${label}</span>
+      <strong style="color:${color}">${val}</strong>
+    </div>`).join('');
+
+  // Top students
+  const lb = Platform.getLeaderboard().slice(0,5);
+  document.getElementById('top-students').innerHTML = `
+    <table class="udm">
+      <thead><tr><th>Ҷой</th><th>Хонанда</th><th>Нуқтаҳо</th><th>Тестҳо</th><th>Миёна%</th></tr></thead>
+      <tbody>${lb.map((s,i)=>{
+        const myR = Platform.getResults().filter(r=>r.userId===s.id);
+        const avg = myR.length?Math.round(myR.reduce((a,r)=>a+r.percent,0)/myR.length):0;
+        const medals=['🥇','🥈','🥉'];
+        return `<tr>
+          <td><strong style="font-size:1.1rem">${medals[i]||'#'+(i+1)}</strong></td>
+          <td><div class="user-cell"><div class="user-av">${s.avatar}</div><div class="user-info-name">${Platform.escapeHtml(s.name)}</div></div></td>
+          <td><strong style="color:var(--primary)">${s.points||0}</strong></td>
+          <td>${myR.length}</td>
+          <td><span class="badge ${avg>=80?'badge-success':avg>=60?'badge-warning':'badge-danger'}">${avg}%</span></td>
+        </tr>`;}).join('')||'<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted)">Маълумот нест</td></tr>'}
+      </tbody>
+    </table>`;
+}
+
+// ===== ANALYTICS =====
+function renderAnalytics() {
+  const courses = Platform.getCourses();
+  const tests = Platform.getTests();
+  const results = Platform.getResults();
+  const users = Platform.getUsers().filter(u=>u.role==='student');
+
+  document.getElementById('analytics-stats').innerHTML = `
+    <div class="udm-stat"><div class="udm-stat-icon" style="background:rgba(0,198,255,.12)">📊</div><div class="udm-stat-info"><div class="udm-stat-num" style="color:var(--primary)">${results.length}</div><div class="udm-stat-label">Иҷрои тестҳо</div></div></div>
+    <div class="udm-stat"><div class="udm-stat-icon" style="background:rgba(16,185,129,.12)">✅</div><div class="udm-stat-info"><div class="udm-stat-num" style="color:var(--success)">${results.filter(r=>r.percent>=60).length}</div><div class="udm-stat-label">Гузашта (≥60%)</div></div></div>
+    <div class="udm-stat"><div class="udm-stat-icon" style="background:rgba(239,68,68,.12)">❌</div><div class="udm-stat-info"><div class="udm-stat-num" style="color:var(--danger)">${results.filter(r=>r.percent<60).length}</div><div class="udm-stat-label">Нагузашта</div></div></div>
+    <div class="udm-stat"><div class="udm-stat-icon" style="background:rgba(245,158,11,.12)">🎓</div><div class="udm-stat-info"><div class="udm-stat-num" style="color:var(--warning)">${users.filter(u=>courses.some(c=>Certificate.canGet(u.id,c.id))).length}</div><div class="udm-stat-label">Хатмкунандагон</div></div></div>`;
+
+  document.getElementById('course-analytics').innerHTML = courses.map(c=>{
+    const cTests=tests.filter(t=>t.courseId===c.id);
+    const cResults=results.filter(r=>cTests.find(t=>t.id===r.testId));
+    const avg=cResults.length?Math.round(cResults.reduce((a,r)=>a+r.percent,0)/cResults.length):0;
+    return `<div style="margin-bottom:1rem"><div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:0.875rem"><span>${c.icon} ${c.title}</span><strong style="color:var(--primary)">${avg}%</strong></div><div class="prog-thin"><div class="prog-thin-fill" style="width:${avg}%"></div></div><div style="font-size:0.75rem;color:var(--text-muted);margin-top:3px">${cResults.length} иҷро · ${cTests.length} тест</div></div>`;
+  }).join('')||'<div style="text-align:center;padding:2rem;color:var(--text-muted)">Маълумот нест</div>';
+
+  const testScores = tests.map(t=>{
+    const tRes=results.filter(r=>r.testId===t.id);
+    const avg=tRes.length?Math.round(tRes.reduce((a,r)=>a+r.percent,0)/tRes.length):0;
+    return{t,avg,cnt:tRes.length};
+  }).filter(x=>x.cnt>0);
+
+  document.getElementById('test-analytics').innerHTML = testScores.length?testScores.map(({t,avg,cnt})=>`
+    <div style="display:flex;align-items:center;gap:0.8rem;padding:0.7rem 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0"><div style="font-size:0.875rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${Platform.escapeHtml(t.title)}</div><div style="font-size:0.75rem;color:var(--text-muted)">${cnt} иҷро · ${t.questions.length} савол</div></div>
+      <span class="badge ${avg>=80?'badge-success':avg>=60?'badge-warning':'badge-danger'}">${avg}%</span>
+    </div>`).join('') : '<div style="text-align:center;padding:2rem;color:var(--text-muted)">Тест иҷро нашудааст</div>';
+}
+
+// ===== COURSES =====
+function renderCourses() {
+  updateBadges();
+  let courses = Platform.getCourses();
+  const flt = document.getElementById('course-level-filter').value;
+  if(flt) courses = courses.filter(c=>c.level===flt);
+  document.getElementById('courses-count-label').textContent = `${courses.length} курс мавҷуд аст`;
+
+  if(!courses.length){
+    document.getElementById('courses-grid').innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📚</div><div class="empty-title">Курс нест</div><div class="empty-desc">Аввалин курсро илова кунед</div><button class="btn btn-primary" onclick="openModal('course')">+ Курс илова кардан</button></div>`;
+    return;
+  }
+  document.getElementById('courses-grid').innerHTML = courses.map(c=>`
+    <div class="course-udm">
+      <div class="course-udm-thumb">
+        <span>${c.icon||'📚'}</span>
+        <div style="position:absolute;top:8px;right:8px">${Platform.getLevelBadge(c.level)}</div>
+      </div>
+      <div class="course-udm-body">
+        <div class="course-udm-title">${Platform.escapeHtml(c.title)}</div>
+        <div class="course-udm-meta">📹 ${c.lessons||0} дарс · ⏱ ${c.duration||'—'}</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.8rem;line-height:1.5">${Platform.escapeHtml((c.description||'').substring(0,70))}${(c.description||'').length>70?'...':''}</div>
+        <div class="course-udm-footer">
+          <button class="btn btn-outline btn-sm" onclick="editCourse(${c.id})">✏️ Таҳрир</button>
+          <button class="act-btn del" onclick="delCourse(${c.id})" title="Ҳазф">🗑️</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function editCourse(id){
+  const c=Platform.getCourses().find(x=>x.id===id);if(!c)return;
+  clearForm('course');
+  document.getElementById('c-id').value=id;
+  document.getElementById('c-icon').value=c.icon||'';
+  document.getElementById('c-title').value=c.title;
+  document.getElementById('c-desc').value=c.description||'';
+  document.getElementById('c-level').value=c.level;
+  document.getElementById('c-dur').value=c.duration||'';
+  document.getElementById('c-cat').value=c.category||'programming';
+  document.getElementById('cm-title').textContent='📚 Курсро таҳрир кардан';
+  OM('course');
+}
+
+function saveCourse(){
+  const id=document.getElementById('c-id').value;
+  const d={icon:document.getElementById('c-icon').value||'📚',title:document.getElementById('c-title').value.trim(),description:document.getElementById('c-desc').value.trim(),level:document.getElementById('c-level').value,duration:document.getElementById('c-dur').value.trim(),category:document.getElementById('c-cat').value};
+  if(!d.title){document.getElementById('c-alert').innerHTML='<div class="alert alert-danger">Ном ҳатмӣ!</div>';return;}
+  if(id)Platform.updateCourse(Number(id),d);else Platform.addCourse(d);
+  CM('course');renderCourses();updateBadges();Notifs.add('Курс сабт шуд: '+d.title,'📚');
+}
+
+function delCourse(id){if(confirm('Курс ҳазф карда мешавад?')){Platform.deleteCourse(id);renderCourses();updateBadges();}}
+
+// ===== TOPICS =====
+function renderTopics(){
+  const courses=Platform.getCourses();
+  const fSel=document.getElementById('topic-course-filter');
+  if(fSel.options.length===1){courses.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.icon+' '+c.title;fSel.appendChild(o);});}
+  const fVal=fSel.value;
+  let topics=Platform.getTopics();
+  if(fVal)topics=topics.filter(t=>t.courseId==fVal);
+  topics.sort((a,b)=>a.order-b.order);
+
+  document.getElementById('topics-table-wrap').innerHTML=topics.length?`
+    <table class="udm">
+      <thead><tr><th>Тартиб</th><th>Курс</th><th>Мавзӯъ</th><th>Видео</th><th>Амалиёт</th></tr></thead>
+      <tbody>${topics.map(t=>{
+        const c=courses.find(x=>x.id===t.courseId);
+        return `<tr>
+          <td><span style="background:var(--bg3);border-radius:6px;padding:2px 10px;font-weight:700">${t.order}</span></td>
+          <td><span style="font-size:0.875rem">${c?c.icon+' '+c.title:'—'}</span></td>
+          <td><div style="font-weight:600">${Platform.escapeHtml(t.title)}</div><div style="font-size:0.75rem;color:var(--text-muted)">${Platform.escapeHtml((t.description||'').substring(0,40))}</div></td>
+          <td>${t.videoName?`<span class="badge badge-success">🎬 ${t.videoName.substring(0,20)}</span>`:'<span class="badge badge-warning">Нест</span>'}</td>
+          <td style="display:flex;gap:6px">
+            <button class="act-btn" onclick="editTopic(${t.id})">✏️</button>
+            <button class="act-btn del" onclick="delTopic(${t.id})">🗑️</button>
+          </td>
+        </tr>`}).join('')}
+      </tbody>
+    </table>`:'<div class="empty-state"><div class="empty-icon">🎬</div><div class="empty-title">Мавзӯъ нест</div><div class="empty-desc">Аввалин мавзӯъро илова кунед</div><button class="btn btn-primary" onclick="openModal(\'topic\')">+ Мавзӯъ илова кардан</button></div>';
+}
+
+document.getElementById('t-video').addEventListener('change',function(){
+  const f=this.files[0];
+  if(f){
+    document.getElementById('video-drop-zone').innerHTML=`<div style="font-size:2rem">✅</div><div style="font-size:0.875rem;color:var(--success);font-weight:600">${f.name}</div><div style="font-size:0.75rem;color:var(--text-muted)">${(f.size/1024/1024).toFixed(1)} МБ</div>`;
+    document.getElementById('t-vinfo').textContent='';
+  }
+});
+
+function editTopic(id){
+  const t=Platform.getTopics().find(x=>x.id===id);if(!t)return;
+  clearForm('topic');fillCourseSelect('topic');
+  document.getElementById('t-id').value=id;
+  document.getElementById('t-course').value=t.courseId;
+  document.getElementById('t-title').value=t.title;
+  document.getElementById('t-desc').value=t.description||'';
+  document.getElementById('t-order').value=t.order;
+  if(t.videoName)document.getElementById('t-vinfo').textContent='Видеои ҷорӣ: '+t.videoName;
+  document.getElementById('tm-title').textContent='🎬 Мавзӯъро таҳрир кардан';
+  OM('topic');
+}
+
+function saveTopic(){
+  const id=document.getElementById('t-id').value;
+  const vf=document.getElementById('t-video').files[0];
+  const d={courseId:Number(document.getElementById('t-course').value),title:document.getElementById('t-title').value.trim(),description:document.getElementById('t-desc').value.trim(),order:Number(document.getElementById('t-order').value)};
+  if(!d.title){document.getElementById('t-alert').innerHTML='<div class="alert alert-danger">Унвон ҳатмӣ!</div>';return;}
+  if(vf){const r=new FileReader();r.onload=e=>{d.videoName=vf.name;d.videoData=e.target.result;ft(id,d);};r.readAsDataURL(vf);}
+  else{if(id){const ex=Platform.getTopics().find(x=>x.id===Number(id));if(ex){d.videoName=ex.videoName;d.videoData=ex.videoData;}}ft(id,d);}
+}
+
+function ft(id,d){
+  if(id)Platform.updateTopic(Number(id),d);else Platform.addTopic(d);
+  CM('topic');renderTopics();Notifs.add('Мавзӯъ сабт шуд: '+d.title,'🎬');
+}
+
+function delTopic(id){if(confirm('Мавзӯъ ҳазф карда мешавад?')){Platform.deleteTopic(id);renderTopics();}}
+
+// ===== TESTS =====
+let qCount=0;
+
+function renderTests(){
+  updateBadges();
+  const courses=Platform.getCourses();
+  const fVal=document.getElementById('test-course-filter').value;
+  // fill filter
+  if(document.getElementById('test-course-filter').options.length===1){
+    courses.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.icon+' '+c.title;document.getElementById('test-course-filter').appendChild(o);});
+  }
+  let tests=Platform.getTests();
+  if(fVal)tests=tests.filter(t=>t.courseId==fVal);
+  document.getElementById('tests-count-label').textContent=`${tests.length} тест мавҷуд аст`;
+
+  document.getElementById('tests-list').innerHTML=tests.length?tests.map(t=>{
+    const c=courses.find(x=>x.id===t.courseId);
+    const results=Platform.getResults().filter(r=>r.testId===t.id);
+    const avg=results.length?Math.round(results.reduce((a,r)=>a+r.percent,0)/results.length):0;
+    return `<div class="test-udm">
+      <div class="test-udm-icon">📝</div>
+      <div class="test-udm-info">
+        <div class="test-udm-title">${Platform.escapeHtml(t.title)}</div>
+        <div class="test-udm-meta">${c?c.icon+' '+c.title:'—'} · ${t.questions.length} савол · ${results.length} иҷро · миёна ${avg}%</div>
+        ${t.description?`<div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">${Platform.escapeHtml(t.description)}</div>`:''}
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-shrink:0">
+        <button class="act-btn" onclick="editTest(${t.id})" title="Таҳрир">✏️</button>
+        <button class="act-btn del" onclick="delTest(${t.id})" title="Ҳазф">🗑️</button>
+      </div>
+    </div>`;
+  }).join(''):`<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-title">Тест нест</div><div class="empty-desc">Аввалин тестро илова кунед</div><button class="btn btn-primary" onclick="openModal('test')">+ Тест илова кардан</button></div>`;
+}
+
+function addQ(q){
+  qCount++;updateQCount();
+  const div=document.createElement('div');
+  div.style.cssText='background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:0.8rem';
+  div.dataset.qi=qCount;
+  div.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem">
+      <span style="font-weight:700;color:var(--primary);font-size:0.875rem">Савол ${qCount}</span>
+      <button style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem" onclick="this.closest('[data-qi]').remove();updateQCount()">✕</button>
+    </div>
+    <input class="form-control qtext" placeholder="Матни саволро нависед..." style="margin-bottom:0.8rem" value="${q?Platform.escapeHtml(q.text):''}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem">
+      ${[0,1,2,3].map(i=>`
+        <label style="display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:8px;padding:0.5rem 0.8rem;cursor:pointer;border:1.5px solid var(--border);transition:border-color 0.2s" class="opt-label">
+          <input type="radio" name="cor-${qCount}" value="${i}" ${q&&q.correct===i?'checked':''} style="accent-color:var(--primary)">
+          <input class="opt${i}" placeholder="Вариант ${i+1}" value="${q?Platform.escapeHtml(q.options[i]||''):''}" style="background:none;border:none;outline:none;flex:1;color:var(--text);font-family:'Exo 2',sans-serif;font-size:0.85rem">
+        </label>`).join('')}
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.75rem;color:var(--text-muted)">☝️ Ҷавоби дурустро бо радиокнопка интихоб кунед</div>`;
+  document.getElementById('q-container').appendChild(div);
+}
+
+function updateQCount(){
+  const c=document.querySelectorAll('#q-container [data-qi]').length;
+  qCount=c;
+  const lbl=document.getElementById('q-count-label');
+  if(lbl)lbl.textContent=c+' савол';
+}
+
+function getQs(){
+  const qs=[];
+  document.querySelectorAll('#q-container [data-qi]').forEach(div=>{
+    const text=div.querySelector('.qtext').value.trim();
+    const opts=[0,1,2,3].map(i=>div.querySelector('.opt'+i).value.trim());
+    const cor=div.querySelector('input[type=radio]:checked');
+    if(text&&opts.every(o=>o))qs.push({id:qs.length+1,text,options:opts,correct:cor?Number(cor.value):0});
+  });
+  return qs;
+}
+
+function editTest(id){
+  const t=Platform.getTests().find(x=>x.id===id);if(!t)return;
+  clearForm('test');fillCourseSelect('test');
+  document.getElementById('ts-id').value=id;
+  document.getElementById('ts-course').value=t.courseId;
+  document.getElementById('ts-title').value=t.title;
+  document.getElementById('ts-desc').value=t.description||'';
+  document.getElementById('ts-time').value=t.timeLimit||30;
+  qCount=0;(t.questions||[]).forEach(q=>addQ(q));
+  document.getElementById('tsm-title').textContent='📝 Тестро таҳрир кардан';
+  OM('test');
+}
+
+function saveTest(){
+  const id=document.getElementById('ts-id').value;
+  const qs=getQs();
+  const d={courseId:Number(document.getElementById('ts-course').value),title:document.getElementById('ts-title').value.trim(),description:document.getElementById('ts-desc').value.trim(),timeLimit:Number(document.getElementById('ts-time').value),questions:qs};
+  if(!d.title){document.getElementById('ts-alert').innerHTML='<div class="alert alert-danger">Унвон ҳатмӣ!</div>';return;}
+  if(id)Platform.updateTest(Number(id),d);else Platform.addTest(d);
+  CM('test');renderTests();updateBadges();Notifs.add('Тест сабт шуд: '+d.title,'📝');
+}
+
+function delTest(id){if(confirm('Тест ҳазф карда мешавад?')){Platform.deleteTest(id);renderTests();updateBadges();}}
+
+// ===== TASKS =====
+function renderTasks(){
+  updateBadges();
+  const courses=Platform.getCourses();
+  const fVal=document.getElementById('task-diff-filter').value;
+  let tasks=Platform.getTasks();
+  if(fVal)tasks=tasks.filter(t=>t.difficulty===fVal);
+  document.getElementById('tasks-count-label').textContent=`${tasks.length} масъала мавҷуд аст`;
+
+  document.getElementById('tasks-table-wrap').innerHTML=tasks.length?`
+    <table class="udm">
+      <thead><tr><th>Курс</th><th>Унвон</th><th>Мушкилӣ</th><th>Забон</th><th>Амалиёт</th></tr></thead>
+      <tbody>${tasks.map(t=>{
+        const c=courses.find(x=>x.id===t.courseId);
+        return `<tr>
+          <td><span style="font-size:0.875rem">${c?c.icon+' '+c.title:'—'}</span></td>
+          <td><div style="font-weight:600">${Platform.escapeHtml(t.title)}</div><div style="font-size:0.75rem;color:var(--text-muted)">${Platform.escapeHtml((t.description||'').substring(0,50))}</div></td>
+          <td>${Platform.getDiffBadge(t.difficulty)}</td>
+          <td><span class="badge badge-primary">${t.language==='python'?'🐍 Python':'🌐 HTML'}</span></td>
+          <td style="display:flex;gap:6px">
+            <button class="act-btn" onclick="editTask(${t.id})">✏️</button>
+            <button class="act-btn del" onclick="delTask(${t.id})">🗑️</button>
+          </td>
+        </tr>`;}).join('')}
+      </tbody>
+    </table>`:`<div class="empty-state"><div class="empty-icon">💡</div><div class="empty-title">Масъала нест</div><div class="empty-desc">Аввалин масъаларо илова кунед</div><button class="btn btn-primary" onclick="openModal('task')">+ Масъала илова кардан</button></div>`;
+}
+
+function editTask(id){
+  const t=Platform.getTasks().find(x=>x.id===id);if(!t)return;
+  clearForm('task');fillCourseSelect('task');
+  document.getElementById('tk-id').value=id;
+  document.getElementById('tk-course').value=t.courseId;
+  document.getElementById('tk-title').value=t.title;
+  document.getElementById('tk-desc').value=t.description||'';
+  document.getElementById('tk-diff').value=t.difficulty;
+  document.getElementById('tk-lang').value=t.language;
+  document.getElementById('tk-code').value=t.starterCode||'';
+  document.getElementById('tkm-title').textContent='💡 Масъаларо таҳрир кардан';
+  OM('task');
+}
+
+function saveTask(){
+  const id=document.getElementById('tk-id').value;
+  const d={courseId:Number(document.getElementById('tk-course').value),title:document.getElementById('tk-title').value.trim(),description:document.getElementById('tk-desc').value.trim(),difficulty:document.getElementById('tk-diff').value,language:document.getElementById('tk-lang').value,starterCode:document.getElementById('tk-code').value};
+  if(!d.title){document.getElementById('tk-alert').innerHTML='<div class="alert alert-danger">Унвон ҳатмӣ!</div>';return;}
+  if(id)Platform.updateTask(Number(id),d);else Platform.addTask(d);
+  CM('task');renderTasks();updateBadges();
+}
+
+function delTask(id){if(confirm('Масъала ҳазф карда мешавад?')){Platform.deleteTask(id);renderTasks();updateBadges();}}
+
+// ===== USERS =====
+function renderUsers(){
+  updateBadges();
+  const fVal=document.getElementById('user-role-filter').value;
+  let users=Platform.getUsers();
+  if(fVal)users=users.filter(u=>u.role===fVal);
+  document.getElementById('users-count-label').textContent=`${users.length} корбар`;
+
+  document.getElementById('users-tbody').innerHTML=users.map((u,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td><div class="user-cell"><div class="user-av">${u.avatar}</div><div><div class="user-info-name">${Platform.escapeHtml(u.name)}</div><div class="user-info-email">${u.email||'—'}</div></div></div></td>
+      <td><code style="color:var(--primary);font-size:0.82rem">${u.username}</code></td>
+      <td><span class="badge ${u.role==='admin'?'badge-warning':'badge-primary'}">${u.role==='admin'?'Администратор':'Хонанда'}</span></td>
+      <td><strong style="color:var(--primary)">${u.points||0}</strong></td>
+      <td style="font-size:0.8rem;color:var(--text-muted)">${Platform.formatDate(u.createdAt)}</td>
+      <td style="display:flex;gap:5px">
+        <button class="act-btn" onclick="editUser(${u.id})" title="Таҳрир">✏️</button>
+        ${u.id!==1?`<button class="act-btn del" onclick="delUser(${u.id})" title="Ҳазф">🗑️</button>`:''}
+      </td>
+    </tr>`).join('');
+}
+
+function editUser(id){
+  const u=Platform.getUsers().find(x=>x.id===id);if(!u)return;
+  clearForm('user');
+  document.getElementById('u-id').value=id;
+  document.getElementById('u-name').value=u.name;
+  document.getElementById('u-uname').value=u.username;
+  document.getElementById('u-pass').value=u.password;
+  document.getElementById('u-email').value=u.email||'';
+  document.querySelector(`input[name="u-role"][value="${u.role}"]`).checked=true;
+  document.getElementById('um-title').textContent='👤 Корбарро таҳрир кардан';
+  OM('user');
+}
+
+function saveUser(){
+  const id=document.getElementById('u-id').value;
+  const role=document.querySelector('input[name="u-role"]:checked').value;
+  const d={name:document.getElementById('u-name').value.trim(),username:document.getElementById('u-uname').value.trim(),password:document.getElementById('u-pass').value,email:document.getElementById('u-email').value.trim(),role};
+  if(!d.name||!d.username||!d.password){document.getElementById('u-alert').innerHTML='<div class="alert alert-danger">Ҳама майдонҳо ҳатмӣ!</div>';return;}
+  if(id)Platform.updateUser(Number(id),d);else Platform.addUser(d);
+  CM('user');renderUsers();updateBadges();Notifs.add((id?'Корбар навсозӣ шуд: ':'Корбари нав: ')+d.name,'👥');
+}
+
+function delUser(id){if(confirm('Корбар ҳазф карда мешавад?')){Platform.deleteUser(id);renderUsers();updateBadges();}}
+
+// ===== STUDENTS =====
+function renderStudents(){
+  const lb=Platform.getLeaderboard();
+  const results=Platform.getResults();
+  document.getElementById('students-tbody').innerHTML=lb.map((s,i)=>{
+    const myR=results.filter(r=>r.userId===s.id);
+    const avg=myR.length?Math.round(myR.reduce((a,r)=>a+r.percent,0)/myR.length):0;
+    const medals=['🥇','🥈','🥉'];
+    return `<tr>
+      <td><div class="user-cell"><div class="user-av">${s.avatar}</div><div><div class="user-info-name">${Platform.escapeHtml(s.name)}</div><div class="user-info-email">${s.email||s.username}</div></div></div></td>
+      <td><strong style="color:var(--primary)">${s.points||0}</strong></td>
+      <td>${myR.length}</td>
+      <td><span class="badge ${avg>=80?'badge-success':avg>=60?'badge-warning':'badge-danger'}">${avg}%</span></td>
+      <td><strong style="font-size:1.1rem">${medals[i]||'#'+(i+1)}</strong></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted)">Хонанда нест</td></tr>';
+}
+
+// ===== GLOBAL SEARCH =====
+function globalSearch(val){
+  if(!val.trim()) return;
+  const q=val.toLowerCase();
+  const users=Platform.getUsers().filter(u=>u.name.toLowerCase().includes(q)||u.username.toLowerCase().includes(q));
+  const courses=Platform.getCourses().filter(c=>c.title.toLowerCase().includes(q));
+  if(users.length) showSection('users',null);
+  else if(courses.length) showSection('courses',null);
+}
+
+// ===== NOTIFICATIONS =====
+function initNotifUI(){
+  const bell=document.getElementById('notif-bell-wrap');
+  if(!bell)return;
+  updateNotifBadge();setInterval(updateNotifBadge,5000);
+  document.addEventListener('click',e=>{if(!bell.contains(e.target))document.getElementById('notif-dropdown').classList.remove('open');});
+}
+function updateNotifBadge(){
+  const count=Notifs.unreadCount(user.id);
+  const badge=document.getElementById('notif-count');
+  if(!badge)return;
+  badge.textContent=count;badge.style.display=count?'':'none';
+}
+function toggleNotif(){
+  const dd=document.getElementById('notif-dropdown');
+  dd.classList.toggle('open');
+  if(dd.classList.contains('open'))renderNotifs();
+}
+function renderNotifs(){
+  const notifs=Notifs.forUser(user.id).slice(0,20);
+  const dd=document.getElementById('notif-dropdown');
+  dd.innerHTML=`<div class="notif-header"><strong>🔔 Огоҳномаҳо</strong><button onclick="Notifs.markAll();renderNotifs();updateNotifBadge()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:0.8rem">Ҳама хонда</button></div>
+  ${notifs.length?notifs.map(n=>`<div class="notif-item ${n.read?'read':'unread'}" onclick="Notifs.markRead(${n.id});renderNotifs();updateNotifBadge()"><div class="notif-icon">${n.icon}</div><div class="notif-text"><div>${Platform.escapeHtml(n.msg)}</div><div class="notif-time">${Chat.timeAgo(n.time)}</div></div></div>`).join(''):'<div class="notif-empty">Огоҳнома нест 🎉</div>'}`;
+}
+
+// INIT
+initNotifUI();
+renderDashboard();
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сертификатҳо — ПлатформаТЈ</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    @media print {
+      body * { visibility: hidden; }
+      #cert-print, #cert-print * { visibility: visible; }
+      #cert-print { position: fixed; inset: 0; z-index:9999; display:flex; align-items:center; justify-content:center; background:#0a0e1a; }
+    }
+  </style>
+</head>
+<body>
+<div id="navbar-root"></div>
+
+<div style="max-width:900px;margin:0 auto;padding:2rem">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem">
+    <div>
+      <h2 style="font-size:1.5rem;font-weight:800">🏅 Сертификатҳои ман</h2>
+      <p style="color:var(--text-muted);font-size:0.875rem">Курсҳоеро, ки хатм кардаед, сертификат гиред</p>
+    </div>
+    <a href="/dashboard.html" class="btn btn-outline btn-sm">← Дашборд</a>
+  </div>
+
+  <!-- Available certs -->
+  <div id="certs-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem;margin-bottom:2rem"></div>
+
+  <!-- In progress -->
+  <div id="progress-section"></div>
+</div>
+
+<!-- CERTIFICATE MODAL -->
+<div class="modal-overlay" id="cert-modal">
+  <div class="modal" style="max-width:780px;background:transparent;border:none;padding:0">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;gap:0.7rem">
+      <button class="btn btn-primary btn-sm" onclick="printCert()">🖨️ Чоп кардан</button>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('cert-modal').classList.remove('active')">✕ Пӯшидан</button>
+    </div>
+    <div id="cert-print">
+      <div class="cert-wrap" id="cert-display"></div>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+const user = Platform.requireAuth();
+document.getElementById('navbar-root').innerHTML = Platform.renderNavbar('sertifikat');
+ThemeManager.init();
+
+function renderAll() {
+  const courses = Platform.getCourses();
+  const tests = Platform.getTests();
+  const results = Platform.getResults();
+
+  const earned = [], inProgress = [];
+
+  courses.forEach(c => {
+    const cTests = tests.filter(t => t.courseId === c.id);
+    if (!cTests.length) return;
+    const passed = cTests.filter(t => {
+      const r = results.find(r => r.userId === user.id && r.testId === t.id);
+      return r && r.percent >= 60;
+    });
+    const pct = Math.round(passed.length / cTests.length * 100);
+    if (passed.length === cTests.length) earned.push({ course: c, pct });
+    else inProgress.push({ course: c, passed: passed.length, total: cTests.length, pct });
+  });
+
+  // Earned certs
+  const grid = document.getElementById('certs-grid');
+  if (!earned.length) {
+    grid.innerHTML = `<div class="card" style="grid-column:1/-1;text-align:center;padding:3rem">
+      <div style="font-size:3rem;margin-bottom:1rem">🎓</div>
+      <div style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem">Ҳоло сертификат нест</div>
+      <div style="color:var(--text-muted)">Тестҳоро бо 60%+ гузаред ва сертификат гиред</div>
+      <a href="/test.html" class="btn btn-primary" style="margin-top:1.5rem">📝 Тестҳоро оғоз кунед</a>
+    </div>`;
+  } else {
+    grid.innerHTML = earned.map(({course}) => `
+      <div class="card" style="text-align:center;cursor:pointer;transition:transform 0.3s" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''" onclick="showCert(${course.id})">
+        <div style="font-size:3rem;margin-bottom:0.5rem">🏅</div>
+        <div style="font-size:1.1rem;font-weight:700;margin-bottom:0.3rem">${Platform.escapeHtml(course.title)}</div>
+        <div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem">${course.icon} ${course.level}</div>
+        <span class="badge badge-success">✅ Хатм шуд</span>
+        <div style="margin-top:1rem">
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showCert(${course.id})">🏅 Сертификат дидан</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // In progress
+  const ps = document.getElementById('progress-section');
+  if (inProgress.length) {
+    ps.innerHTML = `
+      <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">📊 Дар ҷараён</h3>
+      <div style="display:grid;gap:1rem">
+        ${inProgress.map(({course, passed, total, pct}) => `
+          <div class="card">
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.8rem">
+              <span style="font-size:1.8rem">${course.icon}</span>
+              <div style="flex:1">
+                <div style="font-weight:700">${Platform.escapeHtml(course.title)}</div>
+                <div style="color:var(--text-muted);font-size:0.85rem">${passed} / ${total} тест гузашт</div>
+              </div>
+              <span class="badge badge-warning">${pct}%</span>
+            </div>
+            <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
+            <div style="margin-top:0.8rem;font-size:0.8rem;color:var(--text-muted)">
+              Барои сертификат боқимонда ${total-passed} тест бо 60%+ гузаред
+            </div>
+            <a href="/test.html" class="btn btn-outline btn-sm" style="margin-top:0.7rem">📝 Давом додан</a>
+          </div>`).join('')}
+      </div>`;
+  }
+}
+
+function showCert(courseId) {
+  const course = Platform.getCourses().find(c => c.id === courseId);
+  if (!course) return;
+  const date = new Date().toLocaleDateString('tg-TJ', { year:'numeric', month:'long', day:'numeric' });
+  const certId = `CERT-${user.id}-${course.id}`;
+
+  document.getElementById('cert-display').innerHTML = `
+    <div class="cert-corner tl"></div>
+    <div class="cert-corner tr"></div>
+    <div class="cert-corner bl"></div>
+    <div class="cert-corner br"></div>
+    <div class="cert-logo">${course.icon}</div>
+    <div class="cert-platform">ПлатформаТЈ · PLATFORMATJ.TJ</div>
+    <div class="cert-title">Ин тасдиқ мекунад, ки</div>
+    <div class="cert-name">${user.name}</div>
+    <div class="cert-course">бо муваффақият курси</div>
+    <div class="cert-course-name">«${course.title}»</div>
+    <div style="color:var(--text-muted);font-size:0.85rem">Сатҳ: ${course.level} · ${course.duration}</div>
+    <div class="cert-line"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;text-align:left;font-size:0.85rem">
+      <div>
+        <div style="color:var(--text-muted);margin-bottom:4px">Санаи хатм</div>
+        <div style="font-weight:600">${date}</div>
+      </div>
+      <div>
+        <div style="color:var(--text-muted);margin-bottom:4px">Рақами сертификат</div>
+        <div style="font-weight:600;font-family:'Fira Code',monospace;font-size:0.8rem">${certId}</div>
+      </div>
+    </div>
+    <div class="cert-seal">🏅</div>
+    <div style="margin-top:0.5rem;font-size:0.75rem;color:var(--text-muted)">
+      Платформаи таълимии онлайн · platformatj.tj
+    </div>`;
+
+  document.getElementById('cert-modal').classList.add('active');
+}
+
+function printCert() { window.print(); }
+
+document.getElementById('cert-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('cert-modal')) e.target.classList.remove('active');
+});
+
+renderAll();
+</script>
+</body>
+</html>

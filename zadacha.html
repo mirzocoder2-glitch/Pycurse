@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Масъалаҳо — EduTech</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  .task-card { background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:22px;transition:0.25s; }
+  .task-card:hover { border-color:var(--primary);transform:translateY(-2px); }
+  /* TASK SOLVE AREA */
+  #solveArea { display:none; }
+  .solve-layout { display:grid;grid-template-columns:1fr 1fr;gap:20px;height:calc(100vh - 200px); }
+  @media(max-width:900px) { .solve-layout { grid-template-columns:1fr;height:auto; } }
+  .solve-panel { background:var(--card-bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column; }
+  .solve-panel-header { padding:14px 18px;background:var(--card-bg2);border-bottom:1px solid var(--border);font-weight:600;font-size:0.9rem;display:flex;align-items:center;gap:10px; }
+  .code-editor { flex:1;padding:0;border:none;background:#1a1a2e;color:#a9b7d0;font-family:'Fira Code','Courier New',monospace;font-size:0.9rem;resize:none;outline:none;padding:16px;line-height:1.6; }
+  .output-area { flex:1;padding:16px;font-family:'Fira Code','Courier New',monospace;font-size:0.85rem;overflow-y:auto;white-space:pre-wrap;background:#0a0a1a;color:#7ec8e3;line-height:1.6; }
+  .output-err { color:var(--danger); }
+  .task-desc-panel { background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:20px; }
+  .example-box { background:var(--dark);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:0.85rem;color:#7ec8e3;margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Edu<span>Tech</span></div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="/dashboard.html"><span class="nav-icon">🏠</span>Асосӣ</a>
+      <a class="nav-item" href="/pupil.html"><span class="nav-icon">📚</span>Мавзӯъҳо</a>
+      <a class="nav-item" href="/test.html"><span class="nav-icon">📝</span>Тестҳо</a>
+      <a class="nav-item active" href="/zadacha.html"><span class="nav-icon">💻</span>Масъалаҳо</a>
+      <a class="nav-item" href="/interpretator.html"><span class="nav-icon">⚡</span>Интерпретатор</a>
+      <a class="nav-item" href="/reyting.html"><span class="nav-icon">🏆</span>Рейтинг</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="avatarLetter">S</div>
+        <div><div class="user-name" id="sidebarName">Хонанда</div><div class="user-role">Хонанда</div></div>
+      </div>
+      <button class="btn btn-outline btn-sm" style="width:100%;margin-top:10px;justify-content:center" onclick="logout()">Баромадан</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <!-- LIST -->
+    <div id="listArea">
+      <div class="page-header"><h1>💻 Масъалаҳо</h1></div>
+      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="filterTasks('')">Ҳама</button>
+        <button class="btn btn-outline btn-sm" onclick="filterTasks('python')">🐍 Python</button>
+        <button class="btn btn-outline btn-sm" onclick="filterTasks('html')">🌐 HTML</button>
+        <button class="btn btn-outline btn-sm" onclick="filterTasks('','Осон')">🟢 Осон</button>
+        <button class="btn btn-outline btn-sm" onclick="filterTasks('','Душвор')">🔴 Душвор</button>
+      </div>
+      <div class="card-grid" id="tasksGrid"></div>
+    </div>
+
+    <!-- SOLVE -->
+    <div id="solveArea">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <button class="btn btn-outline btn-sm" onclick="showList()">← Бозгашт</button>
+        <h2 id="solveTitle" style="font-size:1.1rem"></h2>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-success btn-sm" onclick="runCode()">▶ Иҷро кардан</button>
+          <button class="btn btn-outline btn-sm" onclick="clearCode()">🗑 Тоза</button>
+        </div>
+      </div>
+      <div class="task-desc-panel">
+        <strong>📋 Шарти масъала:</strong>
+        <p id="solveDesc" style="color:var(--muted);margin-top:8px;font-size:0.9rem;line-height:1.6"></p>
+        <div id="solveExample"></div>
+      </div>
+      <div class="solve-layout">
+        <div class="solve-panel">
+          <div class="solve-panel-header">
+            <span id="editorLang">🐍 Python</span>
+            <span style="color:var(--muted);font-size:0.8rem;margin-left:auto">Коди худро ин ҷо нависед</span>
+          </div>
+          <textarea class="code-editor" id="codeEditor" spellcheck="false" placeholder="# Коди худро ин ҷо нависед..."></textarea>
+        </div>
+        <div class="solve-panel">
+          <div class="solve-panel-header">💻 Натиҷа</div>
+          <div class="output-area" id="outputArea">▶ Барои иҷро кардан тугмаи «Иҷро кардан»-ро пахш кунед...</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="api.js"></script>
+<script>
+const session = requireAuth('student');
+if (session) {
+  document.getElementById('sidebarName').textContent = session.name;
+  document.getElementById('avatarLetter').textContent = session.name[0];
+}
+
+let currentTask = null;
+let currentType = 'python';
+let allTasks = [];
+
+function showList() {
+  document.getElementById('listArea').style.display='';
+  document.getElementById('solveArea').style.display='none';
+  renderList();
+}
+
+function renderList(typeFilter='', diffFilter='') {
+  const data = Storage.getData();
+  allTasks = data.tasks;
+  const filtered = allTasks.filter(t=>(!typeFilter||t.type===typeFilter)&&(!diffFilter||t.difficulty===diffFilter));
+  document.getElementById('tasksGrid').innerHTML = filtered.length ? filtered.map(t=>`
+    <div class="task-card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <span class="badge ${t.type==='python'?'badge-warning':'badge-primary'}">${t.type==='python'?'🐍 Python':'🌐 HTML'}</span>
+        <span class="badge ${t.difficulty==='Осон'?'badge-success':t.difficulty==='Душвор'?'badge-danger':'badge-warning'}">${t.difficulty||'Осон'}</span>
+      </div>
+      <h3 style="margin-bottom:8px">${t.title}</h3>
+      <p style="color:var(--muted);font-size:0.83rem;margin-bottom:14px">${t.description||''}</p>
+      <button class="btn btn-primary btn-sm" onclick="openTask(${t.id})">Ҳал кардан →</button>
+    </div>`).join('') : '<p style="color:var(--muted)">Масъала нест</p>';
+}
+
+function filterTasks(type, diff) { renderList(type, diff||''); }
+
+function openTask(id) {
+  const data = Storage.getData();
+  currentTask = data.tasks.find(t=>t.id===id);
+  currentType = currentTask.type||'python';
+  document.getElementById('listArea').style.display='none';
+  document.getElementById('solveArea').style.display='';
+  document.getElementById('solveTitle').textContent = currentTask.title;
+  document.getElementById('solveDesc').textContent = currentTask.description||'';
+  document.getElementById('editorLang').textContent = currentType==='python'?'🐍 Python':'🌐 HTML';
+  if (currentTask.example) {
+    document.getElementById('solveExample').innerHTML = `<div class="example-box">${currentTask.example}</div>`;
+  } else {
+    document.getElementById('solveExample').innerHTML = '';
+  }
+  document.getElementById('codeEditor').value = '';
+  document.getElementById('outputArea').textContent = '▶ Барои иҷро кардан тугмаи «Иҷро кардан»-ро пахш кунед...';
+  document.getElementById('outputArea').className = 'output-area';
+}
+
+function runCode() {
+  const code = document.getElementById('codeEditor').value.trim();
+  const out = document.getElementById('outputArea');
+  if (!code) { out.textContent='⚠️ Аввал код нависед!'; return; }
+
+  if (currentType==='html') {
+    // Open HTML in iframe / new window
+    const w = window.open('','_blank','width=800,height=600');
+    w.document.write(code);
+    w.document.close();
+    out.textContent='✅ HTML дар тирезаи нав кушода шуд!';
+  } else {
+    // Python interpreter (basic simulation using JS)
+    out.textContent='';
+    out.className='output-area';
+    try {
+      const result = runPythonBasic(code);
+      out.textContent = result || '(натиҷа нест)';
+    } catch(e) {
+      out.className='output-area output-err';
+      out.textContent='❌ Хато: ' + e.message;
+    }
+  }
+}
+
+function clearCode() { document.getElementById('codeEditor').value=''; document.getElementById('outputArea').textContent=''; }
+
+// Basic Python simulator
+function runPythonBasic(code) {
+  const lines = code.split('\n');
+  let output = [];
+  let vars = {};
+
+  for (let line of lines) {
+    line = line.trim();
+    if (!line || line.startsWith('#')) continue;
+
+    // print()
+    const printM = line.match(/^print\((.+)\)$/);
+    if (printM) {
+      let val = evalPyExpr(printM[1], vars);
+      output.push(String(val));
+      continue;
+    }
+
+    // assignment: var = expr
+    const assignM = line.match(/^([a-zA-Z_]\w*)\s*=\s*(.+)$/);
+    if (assignM) {
+      vars[assignM[1]] = evalPyExpr(assignM[2], vars);
+      continue;
+    }
+
+    // input()
+    if (line.includes('input(')) { output.push('[input() дастрас нест дар ин муҳит]'); continue; }
+  }
+
+  return output.join('\n');
+}
+
+function evalPyExpr(expr, vars) {
+  expr = expr.trim();
+  // String literal
+  if ((expr.startsWith('"')&&expr.endsWith('"'))||(expr.startsWith("'")&&expr.endsWith("'"))) return expr.slice(1,-1);
+  // f-string
+  if (expr.startsWith('f"')||expr.startsWith("f'")) {
+    let s = expr.slice(2,-1);
+    s = s.replace(/\{([^}]+)\}/g, (_,k) => vars[k.trim()]??k);
+    return s;
+  }
+  // Number
+  if (!isNaN(expr)) return Number(expr);
+  // Variable
+  if (vars[expr]!==undefined) return vars[expr];
+  // Math
+  try {
+    let safe = expr.replace(/[a-zA-Z_]\w*/g, m => vars[m]!==undefined?vars[m]:m);
+    // Replace ** with Math.pow
+    safe = safe.replace(/(\w+)\s*\*\*\s*(\w+)/g, 'Math.pow($1,$2)');
+    return Function('"use strict"; return ('+safe+')')();
+  } catch { return expr; }
+}
+
+showList();
+</script>
+</body>
+</html>

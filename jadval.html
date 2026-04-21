@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ҷадвали Дарсҳо — ПлатформаТЈ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="navbar-root"></div>
+
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-label">Ҷадвал</div>
+    <a href="#" class="sidebar-link active" onclick="setView('week',this)"><span class="sidebar-icon">📅</span> Ҳафта</a>
+    <a href="#" class="sidebar-link" onclick="setView('list',this)"><span class="sidebar-icon">📋</span> Рӯйхат</a>
+    <div style="border-top:1px solid var(--border);margin-top:1rem;padding-top:1rem">
+      <div class="sidebar-label">Ранг</div>
+      <div style="padding:0.5rem 1.5rem;font-size:0.8rem;color:var(--text-muted)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:12px;height:12px;background:var(--primary);border-radius:3px;display:inline-block"></span> Дарс</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:12px;height:12px;background:var(--warning);border-radius:3px;display:inline-block"></span> Тест</div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="width:12px;height:12px;background:var(--success);border-radius:3px;display:inline-block"></span> Масъала</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border);margin-top:1rem;padding-top:1rem">
+      <a href="/dashboard.html" class="sidebar-link"><span class="sidebar-icon">📊</span> Дашборд</a>
+      <a href="/pupil.html" class="sidebar-link"><span class="sidebar-icon">📚</span> Дарсҳо</a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+      <div>
+        <h2 style="font-size:1.4rem;font-weight:800">📅 Ҷадвали дарсҳо</h2>
+        <p style="color:var(--text-muted);font-size:0.875rem" id="week-label"></p>
+      </div>
+      <div style="display:flex;gap:0.7rem;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="prevWeek()">◀ Қабл</button>
+        <button class="btn btn-outline btn-sm" onclick="thisWeek()">Ин ҳафта</button>
+        <button class="btn btn-outline btn-sm" onclick="nextWeek()">Баъд ▶</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddModal()" id="add-btn" style="display:none">+ Дарс илова кардан</button>
+      </div>
+    </div>
+
+    <div id="view-week">
+      <div class="schedule-grid" id="schedule-grid"></div>
+    </div>
+    <div id="view-list" style="display:none">
+      <div class="card" id="list-view"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD LESSON MODAL (admin only) -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">+ Дарс илова кардан</span>
+      <button class="modal-close" onclick="document.getElementById('modal-add').classList.remove('active')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Унвон</label>
+      <input id="s-title" class="form-control" placeholder="Мавзӯи дарс">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Навъ</label>
+      <select id="s-type" class="form-control">
+        <option value="lesson">📖 Дарс</option>
+        <option value="test">📝 Тест</option>
+        <option value="task">💡 Масъала</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group">
+        <label class="form-label">Рӯз</label>
+        <select id="s-day" class="form-control">
+          <option value="1">Душанбе</option>
+          <option value="2">Сешанбе</option>
+          <option value="3">Чоршанбе</option>
+          <option value="4">Панҷшанбе</option>
+          <option value="5">Ҷумъа</option>
+          <option value="6">Шанбе</option>
+          <option value="0">Якшанбе</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Вақт</label>
+        <input id="s-time" type="time" class="form-control" value="09:00">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Давомнокӣ (дақ)</label>
+      <input id="s-dur" type="number" class="form-control" value="60" min="15" max="480">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Такроршаванда</label>
+      <select id="s-repeat" class="form-control">
+        <option value="once">Танҳо як бор</option>
+        <option value="weekly">Ҳар ҳафта</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="addLesson()">💾 Сабт кардан</button>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+const user = Platform.requireAuth();
+document.getElementById('navbar-root').innerHTML = Platform.renderNavbar('jadval');
+initNotifUI();
+ThemeManager.init();
+
+if (user.role === 'admin') document.getElementById('add-btn').style.display = '';
+
+let weekOffset = 0;
+let currentView = 'week';
+
+function getWeekDates(offset) {
+  const now = new Date();
+  const day = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + offset * 7);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
+
+function setView(v, el) {
+  currentView = v;
+  document.getElementById('view-week').style.display = v === 'week' ? '' : 'none';
+  document.getElementById('view-list').style.display = v === 'list' ? '' : 'none';
+  document.querySelectorAll('.sidebar-link').forEach(a => a.classList.remove('active'));
+  if (el) el.classList.add('active');
+  render();
+}
+
+function prevWeek() { weekOffset--; render(); }
+function nextWeek() { weekOffset++; render(); }
+function thisWeek() { weekOffset = 0; render(); }
+
+function render() {
+  const days = getWeekDates(weekOffset);
+  const today = new Date();
+  const lessons = Schedule.get();
+
+  // Week label
+  const fmt = d => d.toLocaleDateString('ru-RU', { day:'numeric', month:'long' });
+  document.getElementById('week-label').textContent = `${fmt(days[0])} — ${fmt(days[6])}`;
+
+  if (currentView === 'week') renderWeek(days, today, lessons);
+  else renderList(days, today, lessons);
+}
+
+function renderWeek(days, today, lessons) {
+  const grid = document.getElementById('schedule-grid');
+  grid.innerHTML = days.map((d, i) => {
+    const isToday = d.toDateString() === today.toDateString();
+    const dayLessons = lessons.filter(l => {
+      if (l.repeat === 'weekly') return l.day == d.getDay();
+      return l.day == d.getDay() && l.weekOffset == weekOffset;
+    }).sort((a,b) => a.time.localeCompare(b.time));
+
+    return `
+      <div class="schedule-day ${isToday?'today':''}">
+        <div class="schedule-day-name">${Schedule.dayShort[d.getDay()]}</div>
+        <div style="font-size:0.85rem;font-weight:600;margin-bottom:0.5rem;color:${isToday?'var(--primary)':'var(--text-muted)'}">${d.getDate()}</div>
+        ${dayLessons.map(l => `
+          <div class="schedule-lesson type-${l.type}" title="${l.title}" onclick="showLesson(${l.id})">
+            <div style="font-weight:600;font-size:0.72rem">${l.title.substring(0,18)}${l.title.length>18?'...':''}</div>
+            <div class="sched-time">${l.time} · ${l.duration}д</div>
+          </div>`).join('')}
+        ${isToday && user.role==='admin' ? `<div onclick="openAddModal(${d.getDay()})" style="margin-top:4px;text-align:center;font-size:0.75rem;color:var(--primary);cursor:pointer">+ илова</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function renderList(days, today, lessons) {
+  const container = document.getElementById('list-view');
+  const allLessons = days.flatMap(d => {
+    return lessons.filter(l => {
+      if (l.repeat === 'weekly') return l.day == d.getDay();
+      return l.day == d.getDay() && l.weekOffset == weekOffset;
+    }).map(l => ({ ...l, date: d }));
+  }).sort((a,b) => {
+    if (a.date.getDay() !== b.date.getDay()) return a.date - b.date;
+    return a.time.localeCompare(b.time);
+  });
+
+  if (!allLessons.length) {
+    container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text-muted)">Ин ҳафта дарс нест</div>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="card-header"><span class="card-title">📋 Дарсҳои ҳафта</span></div>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>Рӯз</th><th>Вақт</th><th>Унвон</th><th>Навъ</th><th>Давомнокӣ</th>${user.role==='admin'?'<th>Амал</th>':''}</tr></thead>
+      <tbody>${allLessons.map(l => `
+        <tr>
+          <td><strong>${Schedule.dayNames[l.date.getDay()]}</strong><br><small style="color:var(--text-muted)">${l.date.toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</small></td>
+          <td><strong>${l.time}</strong></td>
+          <td>${Platform.escapeHtml(l.title)}</td>
+          <td><span class="badge ${l.type==='test'?'badge-warning':l.type==='task'?'badge-success':'badge-primary'}">${l.type==='test'?'📝 Тест':l.type==='task'?'💡 Масъала':'📖 Дарс'}</span></td>
+          <td>${l.duration} дақ</td>
+          ${user.role==='admin'?`<td><button class="btn btn-danger btn-sm" onclick="delLesson(${l.id})">🗑️</button></td>`:''}
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+}
+
+function showLesson(id) {
+  const l = Schedule.get().find(x => x.id === id);
+  if (!l) return;
+  const types = { lesson:'📖 Дарс', test:'📝 Тест', task:'💡 Масъала' };
+  alert(`${l.title}\n\nНавъ: ${types[l.type]}\nВақт: ${l.time}\nДавомнокӣ: ${l.duration} дақ\nТакрор: ${l.repeat==='weekly'?'Ҳар ҳафта':'Як бор'}`);
+}
+
+function openAddModal(day) {
+  if (day !== undefined) document.getElementById('s-day').value = day;
+  document.getElementById('modal-add').classList.add('active');
+}
+
+function addLesson() {
+  const title = document.getElementById('s-title').value.trim();
+  if (!title) { alert('Унвон ҳатмӣ!'); return; }
+  Schedule.add({
+    title,
+    type: document.getElementById('s-type').value,
+    day: Number(document.getElementById('s-day').value),
+    time: document.getElementById('s-time').value,
+    duration: Number(document.getElementById('s-dur').value),
+    repeat: document.getElementById('s-repeat').value,
+    weekOffset: weekOffset,
+  });
+  Notifs.add(`Дарси нав: ${title}`, '📅');
+  document.getElementById('modal-add').classList.remove('active');
+  document.getElementById('s-title').value = '';
+  render();
+}
+
+function delLesson(id) {
+  if (confirm('Дарс ҳазф карда мешавад?')) { Schedule.del(id); render(); }
+}
+
+// Notif helpers
+function initNotifUI() {
+  const bell = document.getElementById('notif-bell-wrap');
+  if (!bell) return;
+  updateNotifBadge();
+  setInterval(updateNotifBadge, 5000);
+  document.addEventListener('click', e => {
+    if (!bell.contains(e.target)) document.getElementById('notif-dropdown').classList.remove('open');
+  });
+}
+function updateNotifBadge() {
+  const count = Notifs.unreadCount(user.id);
+  const badge = document.getElementById('notif-count');
+  if (!badge) return;
+  badge.textContent = count; badge.style.display = count ? '' : 'none';
+}
+function toggleNotif() {
+  const dd = document.getElementById('notif-dropdown');
+  dd.classList.toggle('open');
+  if (dd.classList.contains('open')) renderNotifs();
+}
+function renderNotifs() {
+  const notifs = Notifs.forUser(user.id).slice(0,15);
+  const dd = document.getElementById('notif-dropdown');
+  dd.innerHTML = `
+    <div class="notif-header"><strong>🔔 Огоҳномаҳо</strong><button onclick="Notifs.markAll();renderNotifs();updateNotifBadge()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:0.8rem">Ҳама хонда</button></div>
+    ${notifs.length ? notifs.map(n=>`<div class="notif-item ${n.read?'read':'unread'}" onclick="Notifs.markRead(${n.id});renderNotifs();updateNotifBadge()"><div class="notif-icon">${n.icon}</div><div class="notif-text"><div>${Platform.escapeHtml(n.msg)}</div><div class="notif-time">${Chat.timeAgo(n.time)}</div></div></div>`).join('') : '<div class="notif-empty">Огоҳнома нест 🎉</div>'}`;
+}
+
+document.getElementById('modal-add').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-add')) document.getElementById('modal-add').classList.remove('active');
+});
+
+render();
+</script>
+</body>
+</html>
